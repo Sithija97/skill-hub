@@ -1,5 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { CustomerService } from "../services/customer";
+import {
+  createCustomerSchema,
+  updateCustomerSchema,
+  customerIdParamSchema,
+} from "../validations/customer";
+import { createError } from "../utils/error";
 
 type CustomerParams = { id: string };
 type CustomerBody = {
@@ -11,6 +17,9 @@ type CustomerBody = {
   country?: string;
   customer_type?: string;
 };
+
+const getValidationMessage = (issues: { message: string }[]) =>
+  issues.map((issue) => issue.message).join(", ");
 
 export const getAllCustomers = async (
   req: Request,
@@ -31,7 +40,14 @@ export const createCustomer = async (
   next: NextFunction,
 ) => {
   try {
-    const customer = await CustomerService.create(req.body);
+    const parsedBody = createCustomerSchema.safeParse(req.body);
+    if (!parsedBody.success) {
+      return next(
+        createError(400, getValidationMessage(parsedBody.error.issues)),
+      );
+    }
+
+    const customer = await CustomerService.create(parsedBody.data);
     res.status(201).json(customer);
   } catch (error) {
     return next(error);
@@ -44,7 +60,14 @@ export const getCustomer = async (
   next: NextFunction,
 ) => {
   try {
-    const customer = await CustomerService.get(req.params.id);
+    const parsedParams = customerIdParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      return next(
+        createError(400, getValidationMessage(parsedParams.error.issues)),
+      );
+    }
+
+    const customer = await CustomerService.get(parsedParams.data.id);
     res.status(200).json(customer);
   } catch (error) {
     return next(error);
@@ -57,7 +80,24 @@ export const updateCustomer = async (
   next: NextFunction,
 ) => {
   try {
-    const customer = await CustomerService.update(req.params.id, req.body);
+    const parsedParams = customerIdParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      return next(
+        createError(400, getValidationMessage(parsedParams.error.issues)),
+      );
+    }
+
+    const parsedBody = updateCustomerSchema.safeParse(req.body);
+    if (!parsedBody.success) {
+      return next(
+        createError(400, getValidationMessage(parsedBody.error.issues)),
+      );
+    }
+
+    const customer = await CustomerService.update(
+      parsedParams.data.id,
+      parsedBody.data,
+    );
     res.status(200).json(customer);
   } catch (error) {
     return next(error);
@@ -70,7 +110,14 @@ export const deleteCustomer = async (
   next: NextFunction,
 ) => {
   try {
-    await CustomerService.delete(req.params.id);
+    const parsedParams = customerIdParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      return next(
+        createError(400, getValidationMessage(parsedParams.error.issues)),
+      );
+    }
+
+    await CustomerService.delete(parsedParams.data.id);
 
     res.status(200).json({ message: "Customer deleted successfully" });
   } catch (error) {
