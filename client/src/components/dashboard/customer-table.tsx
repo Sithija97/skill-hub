@@ -49,7 +49,15 @@ type SortDirection = "asc" | "desc";
 
 const typeVariants: Record<
   CustomerRecord["customerType"],
-  "default" | "secondary" | "outline" | "success" | "warning" | "info" | "purple" | "rose" | "orange"
+  | "default"
+  | "secondary"
+  | "outline"
+  | "success"
+  | "warning"
+  | "info"
+  | "purple"
+  | "rose"
+  | "orange"
 > = {
   Individual: "rose",
   Business: "info",
