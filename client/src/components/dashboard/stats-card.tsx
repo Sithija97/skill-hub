@@ -20,8 +20,8 @@ export function StatsCard({ stat }: StatsCardProps) {
   const TrendIcon = isPositive ? ArrowUpRight : ArrowDownRight;
 
   return (
-    <Card className="border-border/60 bg-card/80 backdrop-blur-sm">
-      <CardHeader className="pb-3">
+    <Card className="border-border bg-card">
+      <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {stat.title}
         </CardTitle>
@@ -29,17 +29,17 @@ export function StatsCard({ stat }: StatsCardProps) {
       <CardContent>
         <div className="flex items-end justify-between gap-3">
           <div>
-            <div className="text-3xl font-semibold tracking-tight">
+            <div className="text-2xl font-semibold tracking-tight">
               {stat.value}
             </div>
             <p className="mt-2 text-sm text-muted-foreground">{stat.note}</p>
           </div>
           <div
             className={cn(
-              "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium",
+              "inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium",
               isPositive
-                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                : "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+                ? "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400"
+                : "border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-400",
             )}
           >
             <TrendIcon className="h-3.5 w-3.5" />

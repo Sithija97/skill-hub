@@ -49,14 +49,14 @@ type SortDirection = "asc" | "desc";
 
 const typeVariants: Record<
   CustomerRecord["customerType"],
-  "default" | "secondary" | "outline" | "success" | "warning" | "info"
+  "default" | "secondary" | "outline" | "success" | "warning" | "info" | "purple" | "rose" | "orange"
 > = {
-  Individual: "secondary",
+  Individual: "rose",
   Business: "info",
   Enterprise: "success",
-  Partner: "warning",
-  Reseller: "outline",
-  Other: "default",
+  Partner: "purple",
+  Reseller: "orange",
+  Other: "outline",
 };
 
 export function CustomerTable({
@@ -160,7 +160,7 @@ export function CustomerTable({
 
   return (
     <Card
-      className={`flex flex-col border-border/60 bg-card/80 backdrop-blur-sm${
+      className={`flex flex-col border-border bg-card${
         scrollable ? " h-[calc(100vh-9rem)] min-h-[620px]" : ""
       }`}
     >
@@ -168,11 +168,11 @@ export function CustomerTable({
         <div>
           <CardTitle className="text-xl">Customer accounts</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
-            Hardcoded preview data matching the CRM dashboard layout.
+            Manage and review all customer profiles.
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <div className="relative min-w-[420px] max-w-[560px]">
+          <div className="relative min-w-[280px] max-w-[420px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="pl-9"
@@ -184,7 +184,7 @@ export function CustomerTable({
               }}
             />
           </div>
-          <Button variant={"outline"} onClick={onAdd}>
+          <Button variant={"outline"} size="sm" onClick={onAdd}>
             Add new account
           </Button>
         </div>
@@ -305,7 +305,7 @@ export function CustomerTable({
           </Table>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
             Showing {paginatedCustomers.length} of {filteredCustomers.length}{" "}
             customers

@@ -27,9 +27,9 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-3 rounded-full border border-border/70 bg-card/80 px-2 py-1 transition hover:bg-accent">
-          <Avatar className="h-9 w-9 border border-border/70">
-            <AvatarFallback>{initials}</AvatarFallback>
+        <button className="flex items-center gap-3 rounded-lg border border-border bg-card px-2 py-1 transition-colors hover:bg-accent">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
           <div className="hidden text-left sm:block">
             <p className="text-sm font-medium leading-none">
