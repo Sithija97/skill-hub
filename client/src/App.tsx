@@ -1,14 +1,11 @@
-import { CustomersPage } from "./pages/CustomersPage";
-import { DashboardPage } from "./pages/DashboardPage";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
+import AppRoutes from "@/routes/app-routes";
 
 const App = () => {
   return (
-    <Routes>
-      <Route path="/" element={<DashboardPage />} />
-      <Route path="/customers" element={<CustomersPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 };
 
