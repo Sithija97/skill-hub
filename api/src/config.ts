@@ -31,4 +31,6 @@ export const config = {
     email: optional("ADMIN_EMAIL", "admin@example.com"),
     password: optional("ADMIN_PASSWORD", "Admin1234!"),
   },
+
+  clientUrl: optional("CLIENT_URL", "http://localhost:3000"),
 };

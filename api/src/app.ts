@@ -3,10 +3,11 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import router from "./routes.js";
 import { errorHandler } from "./common/errors/error-handler.js";
+import { config } from "./config.js";
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: config.clientUrl, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
