@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   type RegisterFormValues,
@@ -15,24 +15,39 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { register as registerApi } from "@/api/auth.api";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: "",
+      fullName: "",
       email: "",
       password: "",
       confirmPassword: "",
     },
   });
 
-  const onSubmit = (data: RegisterFormValues) => {
-    console.log("Sign up form data:", data);
+  const onSubmit = async (data: RegisterFormValues) => {
+    try {
+      await registerApi(data);
+      navigate("/auth/login", { replace: true });
+    } catch (error) {
+      setError("root", {
+        message: getApiErrorMessage(
+          error,
+          "Registration failed. Please try again.",
+        ),
+      });
+    }
   };
 
   return (
@@ -46,16 +61,18 @@ const RegisterPage = () => {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="name">Full name</Label>
+            <Label htmlFor="fullName">Full name</Label>
             <Input
-              id="name"
+              id="fullName"
               type="text"
               autoComplete="name"
               placeholder="John Doe"
-              {...register("name")}
+              {...register("fullName")}
             />
-            {errors.name ? (
-              <p className="text-xs text-destructive">{errors.name.message}</p>
+            {errors.fullName ? (
+              <p className="text-xs text-destructive">
+                {errors.fullName.message}
+              </p>
             ) : null}
           </div>
 
@@ -104,6 +121,10 @@ const RegisterPage = () => {
               </p>
             ) : null}
           </div>
+
+          {errors.root ? (
+            <p className="text-xs text-destructive">{errors.root.message}</p>
+          ) : null}
 
           <Button
             type="submit"

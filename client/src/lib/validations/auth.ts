@@ -2,24 +2,15 @@ import { z } from "zod";
 
 export const loginSchema = z.object({
   email: z.email("Enter a valid email"),
-  password: z
-    .string()
-    .min(6, "Minimum 6 characters")
-    .nonempty("Password is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export const registerSchema = z
   .object({
-    name: z
-      .string()
-      .min(2, "Minimum 2 characters")
-      .nonempty("Name is required"),
+    fullName: z.string().min(1, "Full name is required"),
     email: z.email("Enter a valid email"),
-    password: z
-      .string()
-      .min(6, "Minimum 6 characters")
-      .nonempty("Password is required"),
-    confirmPassword: z.string().nonempty("Please confirm your password"),
+    password: z.string().min(6, "Password must be at least 6 characters").max(72),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"],

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/store/auth-store";
 
 const TopNavbar = () => {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b bg-background/95 px-6 backdrop-blur">
@@ -19,7 +19,7 @@ const TopNavbar = () => {
         </Button>
         <div className="hidden text-right sm:block">
           <p className="text-sm font-medium leading-none">
-            {user?.name ?? "User"}
+            {user?.fullName ?? "User"}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">{user?.email}</p>
         </div>

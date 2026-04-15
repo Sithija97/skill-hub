@@ -1,61 +1,30 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import {
-  clearStoredUser,
-  readStoredUser,
-  storeUser,
-  type AuthUser,
-} from "@/lib/auth-storage";
-
-type LoginInput = {
-  email: string;
-  password: string;
-};
-
-type RegisterInput = {
-  name: string;
-  email: string;
-  password: string;
-};
+import type { IUser } from "@/models/user";
 
 type AuthState = {
-  user: AuthUser | null;
-  isAuthenticated: boolean;
-  login: (input: LoginInput) => Promise<void>;
-  register: (input: RegisterInput) => Promise<void>;
+  accessToken: string | null;
+  user: IUser | null;
+  setAccessToken: (token: string) => void;
+  setUser: (user: IUser) => void;
   logout: () => void;
 };
-
-const initialUser = readStoredUser();
 
 export const useAuthStore = create<AuthState>()(
   devtools(
     (set) => ({
-      user: initialUser,
-      isAuthenticated: Boolean(initialUser),
-      login: async ({ email }) => {
-        const nextUser: AuthUser = {
-          name: email.split("@")[0] || "User",
-          email,
-        };
-
-        storeUser(nextUser);
-        set({ user: nextUser, isAuthenticated: true }, false, "auth/login");
+      accessToken: localStorage.getItem("accessToken"),
+      user: null,
+      setAccessToken: (token) => {
+        localStorage.setItem("accessToken", token);
+        set({ accessToken: token }, false, "setAccessToken");
       },
-      register: async ({ name, email }) => {
-        const nextUser: AuthUser = {
-          name,
-          email,
-        };
-
-        storeUser(nextUser);
-        set({ user: nextUser, isAuthenticated: true }, false, "auth/register");
-      },
+      setUser: (user) => set({ user }, false, "setUser"),
       logout: () => {
-        clearStoredUser();
-        set({ user: null, isAuthenticated: false }, false, "auth/logout");
+        localStorage.removeItem("accessToken");
+        set({ accessToken: null, user: null }, false, "logout");
       },
     }),
-    { name: "AuthStore" },
+    { name: "authentication", store: "authentication", enabled: true },
   ),
 );

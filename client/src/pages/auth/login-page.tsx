@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { type LoginFormValues, loginSchema } from "@/lib/validations/auth";
 import {
@@ -12,11 +12,18 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { login } from "@/api/auth.api";
+import { useAuthStore } from "@/store/auth-store";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const setAccessToken = useAuthStore((s) => s.setAccessToken);
+
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -26,8 +33,16 @@ const LoginPage = () => {
     },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
-    console.log("Sign in form data:", data);
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      const res = await login(data);
+      setAccessToken(res.data.accessToken);
+      navigate("/", { replace: true });
+    } catch (error) {
+      setError("root", {
+        message: getApiErrorMessage(error, "Invalid email or password"),
+      });
+    }
   };
 
   return (
@@ -67,6 +82,10 @@ const LoginPage = () => {
               </p>
             ) : null}
           </div>
+
+          {errors.root ? (
+            <p className="text-xs text-destructive">{errors.root.message}</p>
+          ) : null}
 
           <Button
             type="submit"
