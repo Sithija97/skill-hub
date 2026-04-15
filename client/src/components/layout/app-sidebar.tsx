@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/store/auth-store";
 import { cn } from "@/lib/utils";
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -18,7 +18,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
   );
 
 const AppSidebar = () => {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthStore();
 
   return (
     <aside className="flex h-full w-64 flex-col border-r bg-card">

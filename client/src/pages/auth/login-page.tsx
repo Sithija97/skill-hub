@@ -1,8 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
 import { type LoginFormValues, loginSchema } from "@/lib/validations/auth";
 import {
   Card,
@@ -15,9 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const LoginPage = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { login } = useAuth();
   const {
     register,
     handleSubmit,
@@ -30,12 +26,8 @@ const LoginPage = () => {
     },
   });
 
-  const from = (location.state as { from?: string } | null)?.from || "/";
-
-  const onSubmit = async (data: LoginFormValues) => {
+  const onSubmit = (data: LoginFormValues) => {
     console.log("Sign in form data:", data);
-    await login(data);
-    navigate(from, { replace: true });
   };
 
   return (

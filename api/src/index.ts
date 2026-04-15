@@ -1,33 +1,19 @@
-import express, { Request, Response } from "express";
-import cors from "cors";
-import dotenv from "dotenv";
+import "reflect-metadata";
+import "dotenv/config";
+import { AppDataSource } from "./db/data-source.js";
+import { seed } from "./seed/seed.js";
+import { config } from "./config.js";
+import app from "./app.js";
 
-dotenv.config();
-
-const app = express();
-const PORT = process.env.PORT || 3002;
-
-app.use(cors());
-app.use(express.json());
-
-app.get("/", (_req: Request, res: Response) => {
-  res.json({
-    message: "API starter is running",
+AppDataSource.initialize()
+  .then(async () => {
+    console.log("[DB] Data source initialized");
+    await seed();
+    app.listen(config.port, () => {
+      console.log(`[Server] Listening on http://localhost:${config.port}`);
+    });
+  })
+  .catch((err: unknown) => {
+    console.error("[DB] Failed to initialize data source:", err);
+    process.exit(1);
   });
-});
-
-app.get("/api/hello", (_req: Request, res: Response) => {
-  res.json({
-    message: "Hello World",
-  });
-});
-
-app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    message: `Route not found: ${req.method} ${req.originalUrl}`,
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});

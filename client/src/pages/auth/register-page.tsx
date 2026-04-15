@@ -1,8 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
 import {
   type RegisterFormValues,
   registerSchema,
@@ -18,8 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const RegisterPage = () => {
-  const navigate = useNavigate();
-  const { register: registerUser } = useAuth();
   const {
     register,
     handleSubmit,
@@ -34,16 +31,8 @@ const RegisterPage = () => {
     },
   });
 
-  const onSubmit = async (data: RegisterFormValues) => {
+  const onSubmit = (data: RegisterFormValues) => {
     console.log("Sign up form data:", data);
-
-    await registerUser({
-      name: data.name,
-      email: data.email,
-      password: data.password,
-    });
-
-    navigate("/", { replace: true });
   };
 
   return (
