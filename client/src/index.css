@@ -52,9 +52,10 @@
 @layer base {
   * {
     @apply border-border;
+    font-family: "Inter", system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-style: normal;
   }
   body {
     @apply bg-background text-foreground;
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   }
 }

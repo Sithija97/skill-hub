@@ -1,73 +1,84 @@
-import {
-  LayoutDashboard,
-  LogOut,
-  ShieldCheck,
-  UserCircle2,
-} from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/auth-store";
-import { logout as logoutApi } from "@/api/auth.api";
+import { NavLink } from "react-router-dom";
+import { LayoutDashboard, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipProvider } from "@/components/ui/tooltip";
+import SidebarLogo from "@/components/layout/sidebar-logo";
 
-const linkClass = ({ isActive }: { isActive: boolean }) =>
-  cn(
-    "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-    isActive
-      ? "bg-primary text-primary-foreground"
-      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-  );
+interface NavItem {
+  to: string;
+  icon: React.ElementType;
+  label: string;
+  end?: boolean;
+}
+
+const navItems: NavItem[] = [
+  { to: "/", icon: LayoutDashboard, label: "Home", end: true },
+];
+
+const NavIconButton = ({ to, icon: Icon, label, end }: NavItem) => (
+  // <Tooltip content={label}>
+  //   <NavLink
+  //     to={to}
+  //     end={end}
+  //     className={({ isActive }) =>
+  //       cn(
+  //         "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
+  //         isActive
+  //           ? "bg-[#201D7A] text-white ring-1 ring-[#2A278F]"
+  //           : "text-[#A1A9B8] hover:bg-white/10 hover:text-white",
+  //       )
+  //     }
+  //   >
+  //     <Icon className="h-[18px] w-[18px]" />
+  //   </NavLink>
+  // </Tooltip>
+  <NavLink to={to} end={end}>
+    <Tooltip content={label}>
+      <button
+        aria-label={label}
+        className={cn(
+          "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
+          "text-[#A1A9B8] hover:bg-white/10 hover:text-white",
+        )}
+      >
+        <Icon className="h-[18px] w-[18px]" />
+      </button>
+    </Tooltip>
+  </NavLink>
+);
 
 const AppSidebar = () => {
-  const user = useAuthStore((s) => s.user);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    const store = useAuthStore.getState();
-    logoutApi().finally(() => {
-      store.logout();
-      navigate("/auth/login");
-    });
-  };
-
   return (
-    <aside className="flex h-full w-64 flex-col border-r bg-card">
-      <div className="flex h-16 items-center gap-2 border-b px-5">
-        <ShieldCheck className="h-5 w-5 text-primary" />
-        <span className="text-sm font-semibold tracking-wide">PROJECT HUB</span>
-      </div>
-
-      <nav className="flex-1 space-y-1 p-3">
-        <NavLink to="/" end className={linkClass}>
-          <LayoutDashboard className="h-4 w-4" />
-          Home
-        </NavLink>
-      </nav>
-
-      <div className="border-t p-3">
-        <div className="mb-3 flex items-center gap-3 rounded-md bg-muted/60 p-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <UserCircle2 className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">
-              {user?.fullName ?? "User"}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {user?.email}
-            </p>
-          </div>
+    <TooltipProvider delayDuration={200}>
+      <aside className="flex h-screen w-[72px] flex-col items-center bg-[#151357] py-5">
+        {/* Logo */}
+        <div className="mb-8 flex items-center justify-center">
+          <SidebarLogo />
         </div>
-        <Button
-          variant="secondary"
-          className="w-full justify-start"
-          onClick={handleLogout}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
-        </Button>
-      </div>
-    </aside>
+
+        {/* Navigation */}
+        <nav className="flex flex-1 flex-col items-center gap-2">
+          {navItems.map((item) => (
+            <NavIconButton key={item.to} {...item} />
+          ))}
+        </nav>
+
+        {/* Settings */}
+        <div className="flex flex-col items-center gap-2">
+          <Tooltip content="Settings">
+            <button
+              aria-label="Settings"
+              className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-md transition-colors",
+                "text-[#A1A9B8] hover:bg-white/10 hover:text-white",
+              )}
+            >
+              <Settings className="h-[18px] w-[18px]" />
+            </button>
+          </Tooltip>
+        </div>
+      </aside>
+    </TooltipProvider>
   );
 };
 
