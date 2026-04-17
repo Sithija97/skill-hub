@@ -1,19 +1,19 @@
-import "reflect-metadata";
 import "dotenv/config";
-import { AppDataSource } from "./db/data-source.js";
+import { prisma } from "./db/prisma.js";
 import { seed } from "./seed/seed.js";
 import { config } from "./config.js";
 import app from "./app.js";
 
-AppDataSource.initialize()
-  .then(async () => {
-    console.log("[DB] Data source initialized");
-    await seed();
-    app.listen(config.port, () => {
-      console.log(`[Server] Listening on http://localhost:${config.port}`);
-    });
-  })
-  .catch((err: unknown) => {
-    console.error("[DB] Failed to initialize data source:", err);
-    process.exit(1);
+async function bootstrap(): Promise<void> {
+  await prisma.$connect();
+  console.log("[DB] Prisma connected");
+  await seed();
+  app.listen(config.port, () => {
+    console.log(`[Server] Listening on http://localhost:${config.port}`);
   });
+}
+
+bootstrap().catch((err: unknown) => {
+  console.error("[Server] Failed to start:", err);
+  process.exit(1);
+});

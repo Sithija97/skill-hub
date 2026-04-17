@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { registerSchema, loginSchema } from "../common/schemas/auth.schema.js";
+import { registerSchema, loginSchema } from "../../schemas/auth.schema.js";
 import * as authService from "./auth.service.js";
 import { authenticateJwt } from "./auth.middleware.js";
 

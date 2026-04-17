@@ -1,8 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { config } from "../config.js";
-import { AppError } from "../common/errors/app-error.js";
-import { UserRole } from "../db/models/user.model.js";
+import { config } from "../../config.js";
+import { AppError } from "../../common/errors/app-error.js";
+import type { UserRole } from "@prisma/client";
+
+export type { UserRole };
 
 export interface JwtPayload {
   sub: number;

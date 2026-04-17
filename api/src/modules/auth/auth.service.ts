@@ -2,12 +2,12 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import type { Response } from "express";
-import { config } from "../config.js";
-import { AppError } from "../common/errors/app-error.js";
-import type { RegisterBody, LoginBody } from "../common/schemas/auth.schema.js";
+import { config } from "../../config.js";
+import { AppError } from "../../common/errors/app-error.js";
+import type { RegisterBody, LoginBody } from "../../schemas/auth.schema.js";
 import * as usersService from "../users/users.service.js";
 import type { JwtPayload } from "./auth.middleware.js";
-import { UserRole } from "../db/models/user.model.js";
+import { UserRole } from "@prisma/client";
 
 const SALT_ROUNDS = 12;
 const REFRESH_COOKIE = "refreshToken";
