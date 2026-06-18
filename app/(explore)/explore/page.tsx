@@ -1,3 +1,11 @@
+import { Suspense } from 'react'
+import { SkillGridSkeleton } from '@/components/shared/loading-skeleton'
+import { ExploreContent } from './explore-content'
+
 export default function ExplorePage() {
-  return <div>Explore</div>
+  return (
+    <Suspense fallback={<SkillGridSkeleton count={6} />}>
+      <ExploreContent />
+    </Suspense>
+  )
 }

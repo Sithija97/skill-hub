@@ -1,0 +1,313 @@
+'use client'
+
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import dynamic from 'next/dynamic'
+import { useTheme } from 'next-themes'
+import { IconWorld, IconLock, IconX } from '@tabler/icons-react'
+import type { CreateSkillInput } from '@/lib/services/skill.service'
+import { TargetTool } from '@/types/skill'
+import { TARGET_TOOLS } from '@/config/tools'
+import { createSkillSchema } from '@/lib/validations/skill'
+import { getTagsSync } from '@/lib/services/tag.service'
+import { useEditorStore } from '@/store/editor-store'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+
+const MDEditor = dynamic(() => import('@uiw/react-md-editor'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-100 rounded-md border border-border bg-background">
+      <div className="flex flex-1 flex-col border-r border-border p-4">
+        <div className="mb-3 h-3 w-1/3 animate-pulse rounded bg-muted" />
+        <div className="mb-2 h-3 w-full animate-pulse rounded bg-muted" />
+        <div className="mb-2 h-3 w-4/5 animate-pulse rounded bg-muted" />
+        <div className="mb-2 h-3 w-2/3 animate-pulse rounded bg-muted" />
+      </div>
+      <div className="flex-1 p-4">
+        <div className="mb-3 h-4 w-2/5 animate-pulse rounded bg-muted" />
+        <div className="mb-2 h-3 w-full animate-pulse rounded bg-muted" />
+        <div className="mb-2 h-3 w-3/4 animate-pulse rounded bg-muted" />
+      </div>
+    </div>
+  ),
+})
+
+interface SkillFormProps {
+  initialData?: Partial<CreateSkillInput>
+  skillId?: string
+  onSubmit: (data: CreateSkillInput) => Promise<void>
+  isSubmitting: boolean
+}
+
+export function SkillForm({ initialData, skillId, onSubmit, isSubmitting }: SkillFormProps) {
+  const { resolvedTheme } = useTheme()
+  const { setDraft, resetDraft } = useEditorStore()
+  const [tagInput, setTagInput] = useState('')
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<CreateSkillInput>({
+    resolver: zodResolver(createSkillSchema),
+    defaultValues: {
+      title: initialData?.title ?? '',
+      description: initialData?.description ?? '',
+      content: initialData?.content ?? '',
+      targetTool: initialData?.targetTool ?? TargetTool.CLAUDE,
+      isPublic: initialData?.isPublic ?? false,
+      tags: initialData?.tags ?? [],
+    },
+  })
+
+  const watchedTitle = watch('title')
+  const watchedDescription = watch('description')
+  const watchedContent = watch('content')
+  const watchedTargetTool = watch('targetTool')
+  const watchedIsPublic = watch('isPublic')
+  const watchedTags = watch('tags')
+
+  useEffect(() => {
+    setDraft({
+      title: watchedTitle,
+      description: watchedDescription,
+      content: watchedContent,
+      targetTool: watchedTargetTool,
+      isPublic: watchedIsPublic,
+      tags: watchedTags,
+    })
+  }, [watchedTitle, watchedDescription, watchedContent, watchedTargetTool, watchedIsPublic, watchedTags, setDraft])
+
+  const handleFormSubmit = async (data: CreateSkillInput) => {
+    await onSubmit(data)
+    resetDraft()
+  }
+
+  const currentTags = useMemo(() => watchedTags ?? [], [watchedTags])
+
+  const addTag = useCallback(
+    (tag: string) => {
+      const normalized = tag.trim().toLowerCase()
+      if (!normalized || currentTags.includes(normalized) || currentTags.length >= 10) return
+      setValue('tags', [...currentTags, normalized], { shouldValidate: true })
+      setTagInput('')
+    },
+    [currentTags, setValue]
+  )
+
+  const removeTag = useCallback(
+    (tag: string) => {
+      setValue('tags', currentTags.filter((t) => t !== tag), { shouldValidate: true })
+    },
+    [currentTags, setValue]
+  )
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      addTag(tagInput)
+    }
+  }
+
+  const suggestedTags = getTagsSync().filter(
+    (t) => !currentTags.includes(t.slug)
+  ).slice(0, 8)
+
+  return (
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-6">
+      {/* Title */}
+      <div>
+        <label className="mb-1.5 block text-sm font-semibold text-foreground">Title</label>
+        <Input {...register('title')} placeholder="e.g. Python code reviewer" />
+        {errors.title && <p className="mt-1 text-xs text-destructive">{errors.title.message}</p>}
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className="mb-1.5 block text-sm font-semibold text-foreground">Description</label>
+        <Textarea
+          {...register('description')}
+          placeholder="What does this skill do? When should it be used?"
+          rows={3}
+        />
+        {errors.description && <p className="mt-1 text-xs text-destructive">{errors.description.message}</p>}
+      </div>
+
+      {/* Target Tool */}
+      <div>
+        <label className="mb-1.5 block text-sm font-semibold text-foreground">Target tool</label>
+        <Controller
+          name="targetTool"
+          control={control}
+          render={({ field }) => (
+            <div className="grid grid-cols-3 gap-2">
+              {Object.entries(TARGET_TOOLS).map(([key, config]) => {
+                const isSelected = field.value === key
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => field.onChange(key)}
+                    className={cn(
+                      'flex items-center gap-2 rounded-md border-2 p-3 text-left transition-colors',
+                      isSelected
+                        ? 'border-ring bg-accent'
+                        : 'border-border hover:border-border/80'
+                    )}
+                  >
+                    <div
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: isSelected ? config.brandText : 'var(--color-border-strong)' }}
+                    />
+                    <span className={cn(
+                      'text-sm font-medium',
+                      isSelected ? 'text-foreground' : 'text-muted-foreground'
+                    )}>
+                      {config.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        />
+        {errors.targetTool && <p className="mt-1 text-xs text-destructive">{errors.targetTool.message}</p>}
+      </div>
+
+      {/* Content Editor */}
+      <div>
+        <label className="mb-1 block text-sm font-semibold text-foreground">Skill content</label>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Write your skill in markdown. This is the actual prompt/instruction.
+        </p>
+        <Controller
+          name="content"
+          control={control}
+          render={({ field }) => (
+            <div data-color-mode={resolvedTheme === 'dark' ? 'dark' : 'light'}>
+              <MDEditor
+                value={field.value}
+                onChange={(val) => field.onChange(val ?? '')}
+                height={400}
+                preview="live"
+              />
+            </div>
+          )}
+        />
+        {errors.content && <p className="mt-1 text-xs text-destructive">{errors.content.message}</p>}
+      </div>
+
+      {/* Tags */}
+      <div>
+        <label className="mb-1.5 block text-sm font-semibold text-foreground">Tags</label>
+        {currentTags.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1">
+            {currentTags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="gap-0.5 pr-1">
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => removeTag(tag)}
+                  className="ml-0.5 inline-flex cursor-pointer items-center rounded-full border-none bg-transparent p-0 opacity-60 hover:opacity-100"
+                >
+                  <IconX size={12} />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
+        <Input
+          type="text"
+          value={tagInput}
+          onChange={(e) => setTagInput(e.target.value)}
+          onKeyDown={handleTagKeyDown}
+          placeholder={currentTags.length >= 10 ? 'Max tags reached' : 'Type a tag and press Enter'}
+          disabled={currentTags.length >= 10}
+        />
+        {suggestedTags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {suggestedTags.map((tag) => (
+              <button key={tag.id} type="button" onClick={() => addTag(tag.slug)}>
+                <Badge
+                  variant="secondary"
+                  className="cursor-pointer transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {tag.name}
+                </Badge>
+              </button>
+            ))}
+          </div>
+        )}
+        {errors.tags && <p className="mt-1 text-xs text-destructive">{errors.tags.message}</p>}
+      </div>
+
+      {/* Visibility */}
+      <div>
+        <label className="mb-1.5 block text-sm font-semibold text-foreground">Visibility</label>
+        <Controller
+          name="isPublic"
+          control={control}
+          render={({ field }) => (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => field.onChange(true)}
+                className={cn(
+                  'flex items-start gap-3 rounded-md border-2 p-4 text-left transition-colors',
+                  field.value
+                    ? 'border-ring bg-accent'
+                    : 'border-border hover:border-border/80'
+                )}
+              >
+                <IconWorld size={18} className={cn('mt-0.5 shrink-0', field.value ? 'text-foreground' : 'text-muted-foreground')} />
+                <div>
+                  <div className={cn('mb-0.5 text-sm font-medium', field.value ? 'text-foreground' : 'text-muted-foreground')}>
+                    Public
+                  </div>
+                  <div className="text-xs leading-snug text-muted-foreground">
+                    Anyone can discover and fork this skill
+                  </div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => field.onChange(false)}
+                className={cn(
+                  'flex items-start gap-3 rounded-md border-2 p-4 text-left transition-colors',
+                  !field.value
+                    ? 'border-ring bg-accent'
+                    : 'border-border hover:border-border/80'
+                )}
+              >
+                <IconLock size={18} className={cn('mt-0.5 shrink-0', !field.value ? 'text-foreground' : 'text-muted-foreground')} />
+                <div>
+                  <div className={cn('mb-0.5 text-sm font-medium', !field.value ? 'text-foreground' : 'text-muted-foreground')}>
+                    Private
+                  </div>
+                  <div className="text-xs leading-snug text-muted-foreground">
+                    Only visible to you
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+        />
+      </div>
+
+      {/* Submit */}
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : skillId ? 'Update skill' : 'Create skill'}
+        </Button>
+      </div>
+    </form>
+  )
+}
