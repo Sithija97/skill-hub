@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
+import { db } from './db'
 
 export async function getCurrentUser() {
   const { userId, sessionId } = await auth()
@@ -12,4 +13,10 @@ export async function requireAuth() {
     return redirectToSignIn()
   }
   return { userId, sessionId }
+}
+
+export async function getCurrentDbUser() {
+  const session = await getCurrentUser()
+  if (!session) return null
+  return db.user.findUnique({ where: { id: session.userId } })
 }

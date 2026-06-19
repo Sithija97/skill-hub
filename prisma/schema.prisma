@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── User ──
+// id is the Clerk userId, NOT auto-generated
+model User {
+  id          String   @id
+  username    String   @unique
+  displayName String
+  bio         String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  skills      Skill[]            @relation("AuthoredSkills")
+  collections Collection[]
+  likes       SkillLike[]
+  saves       SkillSave[]
+  follows     CollectionFollow[]
+
+  @@map("users")
+}
+
+enum TargetTool {
+  CLAUDE
+  CURSOR
+  COPILOT
+  WINDSURF
+  CONTINUE
+  OTHER
+}
+
+// ── Skill ──
+model Skill {
+  id           String     @id @default(cuid())
+  title        String
+  description  String
+  content      String     @db.Text
+  targetTool   TargetTool
+  isPublic     Boolean    @default(false)
+  version      Int        @default(1)
+  likesCount   Int        @default(0)
+  savesCount   Int        @default(0)
+  forksCount   Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  authorId     String
+  author       User       @relation("AuthoredSkills", fields: [authorId], references: [id], onDelete: Cascade)
+
+  forkedFromId String?
+  forkedFrom   Skill?     @relation("SkillForks", fields: [forkedFromId], references: [id], onDelete: SetNull)
+  forks        Skill[]    @relation("SkillForks")
+
+  tags         SkillTag[]
+  versions     SkillVersion[]
+  likes        SkillLike[]
+  saves        SkillSave[]
+  collections  CollectionSkill[]
+
+  @@index([authorId])
+  @@index([isPublic])
+  @@index([targetTool])
+  @@index([likesCount])
+  @@index([createdAt])
+  @@map("skills")
+}
+
+// ── SkillVersion ──
+// Fields match types/skill.ts: version (not versionNumber), changelog (not changeNote)
+model SkillVersion {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  version   Int
+  changelog String?
+  createdAt DateTime @default(now())
+
+  skillId   String
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@index([skillId])
+  @@map("skill_versions")
+}
+
+// ── Tag ──
+// Has both name and slug to match types/skill.ts Tag interface
+model Tag {
+  id     String     @id @default(cuid())
+  name   String     @unique
+  slug   String     @unique
+  skills SkillTag[]
+
+  @@map("tags")
+}
+
+// ── SkillTag (join table) ──
+model SkillTag {
+  skillId String
+  tagId   String
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([skillId, tagId])
+  @@map("skill_tags")
+}
+
+// ── Collection ──
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  skills      CollectionSkill[]
+  followers   CollectionFollow[]
+
+  @@index([authorId])
+  @@map("collections")
+}
+
+// ── CollectionSkill (join table) ──
+model CollectionSkill {
+  collectionId String
+  skillId      String
+  addedAt      DateTime   @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  skill        Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, skillId])
+  @@map("collection_skills")
+}
+
+// ── SkillLike ──
+model SkillLike {
+  userId    String
+  skillId   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([userId, skillId])
+  @@map("skill_likes")
+}
+
+// ── SkillSave ──
+model SkillSave {
+  userId    String
+  skillId   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([userId, skillId])
+  @@map("skill_saves")
+}
+
+// ── CollectionFollow ──
+model CollectionFollow {
+  userId       String
+  collectionId String
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, collectionId])
+  @@map("collection_follows")
+}
