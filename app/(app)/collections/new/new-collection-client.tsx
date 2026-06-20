@@ -1,0 +1,113 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
+import { IconWorld, IconLock } from '@tabler/icons-react'
+import { createCollectionSchema, type CreateCollectionSchema } from '@/lib/validations/collection'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
+import { Breadcrumb } from '@/components/shared/breadcrumb'
+import { cn } from '@/lib/utils'
+
+export function NewCollectionClient() {
+  const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<CreateCollectionSchema>({
+    resolver: zodResolver(createCollectionSchema),
+    defaultValues: { name: '', description: '', isPublic: false },
+  })
+
+  const watchedIsPublic = watch('isPublic')
+
+  const onSubmit = async (data: CreateCollectionSchema) => {
+    setIsSubmitting(true)
+    try {
+      const res = await fetch('/api/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error()
+      const collection = await res.json()
+      toast.success('Collection created')
+      router.push(`/collections/${collection.id}`)
+    } catch {
+      toast.error('Failed to create collection')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div>
+      <Breadcrumb items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'New collection' }]} />
+      <h1 className="mb-6 text-xl font-semibold text-foreground">New collection</h1>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="flex max-w-2xl flex-col gap-6">
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-foreground">Name</label>
+          <Input {...register('name')} placeholder="e.g. Frontend Toolkit" />
+          {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>}
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-foreground">Description</label>
+          <Textarea {...register('description')} placeholder="What is this collection for?" rows={3} />
+          {errors.description && <p className="mt-1 text-xs text-destructive">{errors.description.message}</p>}
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-foreground">Visibility</label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setValue('isPublic', true)}
+              className={cn(
+                'flex items-start gap-3 rounded-md border-2 p-4 text-left transition-colors',
+                watchedIsPublic ? 'border-ring bg-accent' : 'border-border hover:border-border/80'
+              )}
+            >
+              <IconWorld size={18} className={cn('mt-0.5 shrink-0', watchedIsPublic ? 'text-foreground' : 'text-muted-foreground')} />
+              <div>
+                <div className={cn('mb-0.5 text-sm font-medium', watchedIsPublic ? 'text-foreground' : 'text-muted-foreground')}>Public</div>
+                <div className="text-xs leading-snug text-muted-foreground">Anyone can see this collection</div>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setValue('isPublic', false)}
+              className={cn(
+                'flex items-start gap-3 rounded-md border-2 p-4 text-left transition-colors',
+                !watchedIsPublic ? 'border-ring bg-accent' : 'border-border hover:border-border/80'
+              )}
+            >
+              <IconLock size={18} className={cn('mt-0.5 shrink-0', !watchedIsPublic ? 'text-foreground' : 'text-muted-foreground')} />
+              <div>
+                <div className={cn('mb-0.5 text-sm font-medium', !watchedIsPublic ? 'text-foreground' : 'text-muted-foreground')}>Private</div>
+                <div className="text-xs leading-snug text-muted-foreground">Only visible to you</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create collection'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}

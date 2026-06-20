@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { likeSkill, unlikeSkill, saveSkill, unsaveSkill, forkSkill } from '@/lib/services/skill.service'
 import type { SkillWithRelations } from '@/types/skill'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,52 +13,84 @@ import { IconHeart, IconHeartFilled, IconBookmark, IconBookmarkFilled, IconGitFo
 interface PublicSkillClientProps {
   skill: SkillWithRelations
   username: string
+  forkedFrom?: { title: string; authorUsername: string } | null
 }
 
-export function PublicSkillClient({ skill, username }: PublicSkillClientProps) {
+export function PublicSkillClient({ skill, username, forkedFrom }: PublicSkillClientProps) {
   const router = useRouter()
   const [liked, setLiked] = useState(skill.isLiked)
   const [saved, setSaved] = useState(skill.isSaved)
   const [likeCount, setLikeCount] = useState(skill.likesCount)
   const [saveCount, setSaveCount] = useState(skill.savesCount)
+  const [forksCount, setForksCount] = useState(skill.forksCount)
+  const [isPending, setIsPending] = useState(false)
 
   const handleToggleLike = useCallback(async () => {
+    if (isPending) return
+    setIsPending(true)
+
     const wasLiked = liked
     setLiked(!wasLiked)
     setLikeCount((c) => wasLiked ? c - 1 : c + 1)
+
     try {
-      if (wasLiked) await unlikeSkill(skill.id, 'user_mock_current')
-      else await likeSkill(skill.id, 'user_mock_current')
+      const res = await fetch(`/api/skills/${skill.id}/like`, {
+        method: wasLiked ? 'DELETE' : 'POST',
+      })
+      if (res.status === 401) { router.push('/sign-in'); return }
+      if (!res.ok) throw new Error()
     } catch {
       setLiked(wasLiked)
       setLikeCount((c) => wasLiked ? c + 1 : c - 1)
-      toast.error('Failed to update like')
+      toast.error('Could not update like. Please try again.')
+    } finally {
+      setIsPending(false)
     }
-  }, [skill.id, liked])
+  }, [skill.id, liked, isPending, router])
 
   const handleToggleSave = useCallback(async () => {
+    if (isPending) return
+    setIsPending(true)
+
     const wasSaved = saved
     setSaved(!wasSaved)
     setSaveCount((c) => wasSaved ? c - 1 : c + 1)
+
     try {
-      if (wasSaved) await unsaveSkill(skill.id, 'user_mock_current')
-      else await saveSkill(skill.id, 'user_mock_current')
+      const res = await fetch(`/api/skills/${skill.id}/save`, {
+        method: wasSaved ? 'DELETE' : 'POST',
+      })
+      if (res.status === 401) { router.push('/sign-in'); return }
+      if (!res.ok) throw new Error()
     } catch {
       setSaved(wasSaved)
       setSaveCount((c) => wasSaved ? c + 1 : c - 1)
-      toast.error('Failed to update save')
+      toast.error('Could not update save. Please try again.')
+    } finally {
+      setIsPending(false)
     }
-  }, [skill.id, saved])
+  }, [skill.id, saved, isPending, router])
 
   const handleFork = useCallback(async () => {
+    if (isPending) return
+    setIsPending(true)
+
+    setForksCount((c) => c + 1)
+
     try {
-      const forked = await forkSkill(skill.id, 'user_mock_current')
+      const res = await fetch(`/api/skills/${skill.id}/fork`, { method: 'POST' })
+      if (res.status === 401) { router.push('/sign-in'); return }
+      if (!res.ok) throw new Error()
+      const forkedSkill = await res.json()
       toast.success('Skill forked successfully')
-      router.push(`/skills/${forked.id}/edit`)
+      router.push(`/skills/${forkedSkill.id}/edit`)
     } catch {
-      toast.error('Failed to fork skill')
+      setForksCount((c) => c - 1)
+      toast.error('Could not fork this skill. Please try again.')
+    } finally {
+      setIsPending(false)
     }
-  }, [skill.id, router])
+  }, [skill.id, isPending, router])
 
   const publicSidebar = (
     <Card size="sm">
@@ -72,6 +103,7 @@ export function PublicSkillClient({ skill, username }: PublicSkillClientProps) {
           size="sm"
           className={`justify-start gap-2 ${liked ? 'text-red-500' : ''}`}
           onClick={handleToggleLike}
+          disabled={isPending}
         >
           {liked ? <IconHeartFilled size={15} /> : <IconHeart size={15} />}
           {liked ? 'Liked' : 'Like'}
@@ -83,16 +115,23 @@ export function PublicSkillClient({ skill, username }: PublicSkillClientProps) {
           size="sm"
           className={`justify-start gap-2 ${saved ? 'text-ring' : ''}`}
           onClick={handleToggleSave}
+          disabled={isPending}
         >
           {saved ? <IconBookmarkFilled size={15} /> : <IconBookmark size={15} />}
           {saved ? 'Saved' : 'Save'}
           <span className="ml-auto text-xs text-muted-foreground">{saveCount}</span>
         </Button>
 
-        <Button variant="outline" size="sm" className="justify-start gap-2" onClick={handleFork}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="justify-start gap-2"
+          onClick={handleFork}
+          disabled={isPending}
+        >
           <IconGitFork size={15} />
           Fork
-          <span className="ml-auto text-xs text-muted-foreground">{skill.forksCount}</span>
+          <span className="ml-auto text-xs text-muted-foreground">{forksCount}</span>
         </Button>
       </CardContent>
     </Card>
@@ -102,6 +141,7 @@ export function PublicSkillClient({ skill, username }: PublicSkillClientProps) {
     <SkillDetailView
       skill={skill}
       sidebar={publicSidebar}
+      forkedFrom={forkedFrom}
       breadcrumb={
         <Breadcrumb
           items={[

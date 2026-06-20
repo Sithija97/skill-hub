@@ -1,11 +1,7 @@
-// TODO: Replace mock imports with Prisma calls in Step 11
-import { MOCK_TAGS } from '@/lib/mock/data/tags.mock'
+import { db } from '@/lib/db'
 import type { Tag } from '@/types/skill'
 
 export async function getTags(): Promise<Tag[]> {
-  return MOCK_TAGS
-}
-
-export function getTagsSync(): Tag[] {
-  return MOCK_TAGS
+  const rows = await db.tag.findMany({ orderBy: { name: 'asc' } })
+  return rows.map((t) => ({ id: t.id, name: t.name, slug: t.slug }))
 }

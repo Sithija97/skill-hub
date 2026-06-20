@@ -1,7 +1,7 @@
 'use client'
 
 import ReactMarkdown from 'react-markdown'
-import rehypeHighlight from 'rehype-highlight'
+import { rehypeHighlightConfigured } from '@/lib/rehype-highlight'
 import Link from 'next/link'
 import { IconCopy, IconCheck, IconDownload, IconGitFork } from '@tabler/icons-react'
 import type { SkillWithRelations } from '@/types/skill'
@@ -19,6 +19,7 @@ interface SkillDetailViewProps {
   skill: SkillWithRelations
   sidebar: React.ReactNode
   breadcrumb: React.ReactNode
+  forkedFrom?: { title: string; authorUsername: string } | null
 }
 
 function downloadFile(content: string, filename: string, mimeType: string) {
@@ -31,7 +32,7 @@ function downloadFile(content: string, filename: string, mimeType: string) {
   URL.revokeObjectURL(url)
 }
 
-export function SkillDetailView({ skill, sidebar, breadcrumb }: SkillDetailViewProps) {
+export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: SkillDetailViewProps) {
   const { copy, copied } = useCopy()
   const toolConfig = TARGET_TOOLS[skill.targetTool]
   const exportData = formatSkillForExport(skill)
@@ -78,7 +79,20 @@ export function SkillDetailView({ skill, sidebar, breadcrumb }: SkillDetailViewP
             {skill.forkedFromId && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <IconGitFork size={13} />
-                <span>Forked from another skill</span>
+                {forkedFrom ? (
+                  <span>
+                    Forked from{' '}
+                    <Link href={`/${forkedFrom.authorUsername}/${skill.forkedFromId}`} className="font-medium text-foreground hover:underline">
+                      {forkedFrom.title}
+                    </Link>
+                    {' '}by{' '}
+                    <Link href={`/${forkedFrom.authorUsername}`} className="font-medium text-foreground hover:underline">
+                      {forkedFrom.authorUsername}
+                    </Link>
+                  </span>
+                ) : (
+                  <span>Forked from another skill</span>
+                )}
               </div>
             )}
           </div>
@@ -125,7 +139,7 @@ export function SkillDetailView({ skill, sidebar, breadcrumb }: SkillDetailViewP
             </CardHeader>
             <CardContent className="p-5">
               <div className="prose">
-                <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                <ReactMarkdown rehypePlugins={[rehypeHighlightConfigured]}>
                   {skill.content}
                 </ReactMarkdown>
               </div>

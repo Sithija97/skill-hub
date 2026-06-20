@@ -45,7 +45,7 @@ export function CollectionCard({ collection, showFollowButton = false }: Collect
 
         <CardFooter className="gap-2">
           <PublicPrivateBadge isPublic={collection.isPublic} />
-          {showFollowButton && <FollowButton />}
+          {showFollowButton && <FollowButton collectionId={collection.id} />}
         </CardFooter>
       </Card>
     </Link>

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { deleteSkill } from '@/lib/services/skill.service'
+import { deleteSkillAction } from '@/lib/actions/skill.actions'
 import type { SkillWithRelations } from '@/types/skill'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -13,13 +13,13 @@ import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { SkillDetailView } from '@/components/skills/skill-detail-view'
 import { IconPencil, IconHistory, IconTrash } from '@tabler/icons-react'
 
-export function SkillDetailClient({ skill }: { skill: SkillWithRelations }) {
+export function SkillDetailClient({ skill, currentUserId, forkedFrom }: { skill: SkillWithRelations; currentUserId: string; forkedFrom?: { title: string; authorUsername: string } | null }) {
   const router = useRouter()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const handleDelete = async () => {
     try {
-      await deleteSkill(skill.id)
+      await deleteSkillAction(skill.id)
       toast.success('Skill deleted')
       router.push('/dashboard')
     } catch {
@@ -28,7 +28,7 @@ export function SkillDetailClient({ skill }: { skill: SkillWithRelations }) {
     setShowDeleteDialog(false)
   }
 
-  const isOwner = skill.authorId === 'user_mock_current'
+  const isOwner = skill.authorId === currentUserId
 
   const ownerSidebar = (
     <Card size="sm">
@@ -77,6 +77,7 @@ export function SkillDetailClient({ skill }: { skill: SkillWithRelations }) {
     <SkillDetailView
       skill={skill}
       sidebar={isOwner ? ownerSidebar : null}
+      forkedFrom={forkedFrom}
       breadcrumb={
         <Breadcrumb
           items={[

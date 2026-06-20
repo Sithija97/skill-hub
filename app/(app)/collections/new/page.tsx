@@ -1,3 +1,5 @@
+import { NewCollectionClient } from './new-collection-client'
+
 export default function NewCollectionPage() {
-  return <div>New Collection</div>
+  return <NewCollectionClient />
 }

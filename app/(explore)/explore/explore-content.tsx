@@ -1,24 +1,32 @@
 'use client'
 
 import { useEffect, useMemo, useCallback } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { IconSearch, IconCompass } from '@tabler/icons-react'
 import { TargetTool } from '@/types/skill'
+import type { SkillWithRelations, Tag } from '@/types/skill'
+import { useShallow } from 'zustand/react/shallow'
 import { useExploreStore } from '@/store/explore-store'
 import { useSkills } from '@/hooks/use-skills'
 import { ExploreFilters } from '@/components/explore/explore-filters'
 import { SkillsGrid } from '@/components/explore/skills-grid'
 import { TrendingPanel } from '@/components/explore/trending-panel'
 import { EmptyState } from '@/components/shared/empty-state'
-import { getTagsSync } from '@/lib/services/tag.service'
 import type { SkillFilters } from '@/lib/services/skill.service'
+import type { PaginatedResponse } from '@/types/api'
 
-export function ExploreContent() {
-  const router = useRouter()
+interface ExploreContentProps {
+  initialData?: PaginatedResponse<SkillWithRelations>
+  allTags?: Tag[]
+}
+
+export function ExploreContent({ initialData, allTags = [] }: ExploreContentProps) {
   const searchParams = useSearchParams()
-  const { filters, setFilters } = useExploreStore()
+  const { filters, setFilters, resetFilters } = useExploreStore(useShallow((s) => ({ filters: s.filters, setFilters: s.setFilters, resetFilters: s.resetFilters })))
 
   useEffect(() => {
+    resetFilters()
+
     const tool = searchParams.get('tool') as TargetTool | null
     const sort = searchParams.get('sort') as 'latest' | 'popular' | 'forked' | null
     const tag = searchParams.get('tag')
@@ -47,9 +55,9 @@ export function ExploreContent() {
       if (merged.search) params.set('q', merged.search)
 
       const qs = params.toString()
-      router.replace(qs ? `/explore?${qs}` : '/explore', { scroll: false })
+      window.history.replaceState(null, '', qs ? `/explore?${qs}` : '/explore')
     },
-    [filters, setFilters, router]
+    [filters, setFilters]
   )
 
   const exploreFilters = useMemo(
@@ -57,14 +65,14 @@ export function ExploreContent() {
     [filters]
   )
 
-  const { skills, loading, hasMore, loadMore, total } = useSkills(exploreFilters)
+  const { skills, loading, fetching, loadingMore, hasMore, loadMore, total } = useSkills(exploreFilters, initialData)
 
   const trendingSkills = useMemo(
     () => [...skills].sort((a, b) => b.likesCount - a.likesCount).slice(0, 5),
     [skills]
   )
 
-  const popularTags = useMemo(() => getTagsSync().slice(0, 8), [])
+  const popularTags = useMemo(() => allTags.slice(0, 8), [allTags])
 
   const handleTagClickFromPanel = useCallback(
     (slug: string) => {
@@ -109,11 +117,11 @@ export function ExploreContent() {
       <div className="grid grid-cols-[1fr_280px] items-start gap-6">
         <div>
           <div className="mb-5">
-            <ExploreFilters filters={filters} onChange={updateFilters} total={total} />
+            <ExploreFilters filters={filters} onChange={updateFilters} total={total} allTags={allTags} fetching={fetching} />
           </div>
 
-          {skills.length > 0 || loading ? (
-            <SkillsGrid skills={skills} loading={loading} hasMore={hasMore} onLoadMore={loadMore} showAuthor />
+          {skills.length > 0 || loading || fetching ? (
+            <SkillsGrid skills={skills} loading={loading} fetching={fetching} loadingMore={loadingMore} hasMore={hasMore} onLoadMore={loadMore} showAuthor />
           ) : (
             <EmptyState
               icon={IconCompass}

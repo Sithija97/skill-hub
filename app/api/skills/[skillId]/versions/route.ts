@@ -1,9 +1,15 @@
-import { NextResponse } from 'next/server'
+import { getSkillVersions } from '@/lib/services/skill.service'
 
-export async function GET() {
-  return NextResponse.json({ data: [], total: 0, page: 1, pageSize: 20, hasMore: false })
-}
-
-export async function POST() {
-  return NextResponse.json({ data: null, error: 'Not implemented' }, { status: 501 })
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ skillId: string }> }
+) {
+  try {
+    const { skillId } = await params
+    const versions = await getSkillVersions(skillId)
+    return Response.json(versions)
+  } catch (err) {
+    if (err instanceof Response) return err
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

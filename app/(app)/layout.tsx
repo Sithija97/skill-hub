@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth'
 import { Topbar } from '@/components/layout/topbar'
 import { Sidebar } from '@/components/layout/sidebar'
+import { Toaster } from '@/components/shared/toast'
 
 export default async function AppLayout({
   children,
@@ -18,6 +19,7 @@ export default async function AppLayout({
           {children}
         </main>
       </div>
+      <Toaster />
     </div>
   )
 }

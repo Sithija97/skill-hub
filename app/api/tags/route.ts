@@ -1,5 +1,11 @@
-import { NextResponse } from 'next/server'
+import { getTags } from '@/lib/services/tag.service'
 
 export async function GET() {
-  return NextResponse.json({ data: [] })
+  try {
+    const tags = await getTags()
+    return Response.json(tags)
+  } catch (err) {
+    if (err instanceof Response) return err
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

@@ -1,10 +1,10 @@
 import 'dotenv/config'
 import { PrismaClient } from '../lib/generated/prisma/client'
 import { TargetTool } from '../lib/generated/prisma/enums'
-import { PrismaPg } from '@prisma/adapter-pg'
+import { PrismaNeon } from '@prisma/adapter-neon'
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg(process.env.DATABASE_URL!),
+  adapter: new PrismaNeon({ connectionString: process.env.DATABASE_URL! }),
 })
 
 async function main() {

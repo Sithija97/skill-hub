@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { updateSkill } from '@/lib/services/skill.service'
+import { updateSkillAction } from '@/lib/actions/skill.actions'
 import type { SkillWithRelations, SkillVersion } from '@/types/skill'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -28,7 +28,7 @@ export function VersionsClient({ skill, versions }: VersionsClientProps) {
   const handleRestore = async () => {
     if (!restoreTarget) return
     try {
-      await updateSkill(skill.id, { content: restoreTarget.content })
+      await updateSkillAction(skill.id, { content: restoreTarget.content })
       toast.success(`Restored to version ${restoreTarget.version}`)
       router.push(`/skills/${skill.id}`)
     } catch {

@@ -1,10 +1,6 @@
-'use client'
-
 import { TargetTool } from '@/types/skill'
 import { TARGET_TOOLS } from '@/config/tools'
 import { Badge } from '@/components/ui/badge'
-import { useTheme } from 'next-themes'
-import { useMounted } from '@/hooks/use-mounted'
 
 interface TargetToolBadgeProps {
   tool: TargetTool
@@ -12,21 +8,18 @@ interface TargetToolBadgeProps {
 }
 
 export function TargetToolBadge({ tool, size = 'sm' }: TargetToolBadgeProps) {
-  const { resolvedTheme } = useTheme()
-  const mounted = useMounted()
-
   const config = TARGET_TOOLS[tool]
-  const isDark = mounted && resolvedTheme === 'dark'
 
   return (
     <Badge
       variant="secondary"
-      className={size === 'md' ? 'px-2.5 py-0.5 text-xs' : 'px-1.5 py-0 text-xs'}
+      className={`border-transparent bg-(--tool-bg) text-(--tool-text) dark:bg-(--tool-bg-dark) dark:text-(--tool-text-dark) ${size === 'md' ? 'px-2.5 py-0.5 text-xs' : 'px-1.5 py-0 text-xs'}`}
       style={{
-        backgroundColor: isDark ? config.brandBgDark : config.brandBg,
-        color: isDark ? config.brandTextDark : config.brandText,
-        borderColor: 'transparent',
-      }}
+        '--tool-bg': config.brandBg,
+        '--tool-bg-dark': config.brandBgDark,
+        '--tool-text': config.brandText,
+        '--tool-text-dark': config.brandTextDark,
+      } as React.CSSProperties}
     >
       {config.label}
     </Badge>

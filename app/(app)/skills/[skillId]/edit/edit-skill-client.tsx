@@ -9,21 +9,22 @@ import { Breadcrumb } from '@/components/shared/breadcrumb'
 import { SkillForm } from '@/components/skills/skill-form'
 import { SkillEditorSidebar } from '@/components/skills/skill-editor-sidebar'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
-import { updateSkill, deleteSkill } from '@/lib/services/skill.service'
+import { updateSkillAction, deleteSkillAction } from '@/lib/actions/skill.actions'
 import type { CreateSkillInput } from '@/lib/services/skill.service'
-import type { SkillWithRelations } from '@/types/skill'
+import type { SkillWithRelations, Tag } from '@/types/skill'
+import { useShallow } from 'zustand/react/shallow'
 import { useEditorStore } from '@/store/editor-store'
 
-export function EditSkillClient({ skill }: { skill: SkillWithRelations }) {
+export function EditSkillClient({ skill, availableTags = [] }: { skill: SkillWithRelations; availableTags?: Tag[] }) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const { draft, isDirty, resetDraft } = useEditorStore()
+  const { draft, isDirty, resetDraft } = useEditorStore(useShallow((s) => ({ draft: s.draft, isDirty: s.isDirty, resetDraft: s.resetDraft })))
 
   const handleSubmit = async (data: CreateSkillInput) => {
     setIsSubmitting(true)
     try {
-      await updateSkill(skill.id, data)
+      await updateSkillAction(skill.id, data)
       toast.success('Skill updated')
       resetDraft()
       router.push(`/skills/${skill.id}`)
@@ -36,7 +37,7 @@ export function EditSkillClient({ skill }: { skill: SkillWithRelations }) {
 
   const handleDelete = async () => {
     try {
-      await deleteSkill(skill.id)
+      await deleteSkillAction(skill.id)
       toast.success('Skill deleted')
       resetDraft()
       router.push('/dashboard')
@@ -82,6 +83,7 @@ export function EditSkillClient({ skill }: { skill: SkillWithRelations }) {
             skillId={skill.id}
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
+            availableTags={availableTags}
           />
 
           <Separator className="my-8" />

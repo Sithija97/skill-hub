@@ -19,10 +19,11 @@ interface ProfileClientProps {
   profile: UserProfile
   skills: SkillWithRelations[]
   collections: CollectionWithSkills[]
+  currentUserId: string | null
 }
 
-export function ProfileClient({ profile, skills, collections }: ProfileClientProps) {
-  const isOwnProfile = profile.id === 'user_mock_current'
+export function ProfileClient({ profile, skills, collections, currentUserId }: ProfileClientProps) {
+  const isOwnProfile = currentUserId !== null && profile.id === currentUserId
 
   const totalLikes = useMemo(
     () => skills.reduce((sum, s) => sum + s.likesCount, 0),

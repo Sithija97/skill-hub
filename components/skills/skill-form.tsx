@@ -10,7 +10,8 @@ import type { CreateSkillInput } from '@/lib/services/skill.service'
 import { TargetTool } from '@/types/skill'
 import { TARGET_TOOLS } from '@/config/tools'
 import { createSkillSchema } from '@/lib/validations/skill'
-import { getTagsSync } from '@/lib/services/tag.service'
+import type { Tag } from '@/types/skill'
+import { useShallow } from 'zustand/react/shallow'
 import { useEditorStore } from '@/store/editor-store'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -42,11 +43,12 @@ interface SkillFormProps {
   skillId?: string
   onSubmit: (data: CreateSkillInput) => Promise<void>
   isSubmitting: boolean
+  availableTags?: Tag[]
 }
 
-export function SkillForm({ initialData, skillId, onSubmit, isSubmitting }: SkillFormProps) {
+export function SkillForm({ initialData, skillId, onSubmit, isSubmitting, availableTags = [] }: SkillFormProps) {
   const { resolvedTheme } = useTheme()
-  const { setDraft, resetDraft } = useEditorStore()
+  const { setDraft, resetDraft } = useEditorStore(useShallow((s) => ({ setDraft: s.setDraft, resetDraft: s.resetDraft })))
   const [tagInput, setTagInput] = useState('')
 
   const {
@@ -117,7 +119,7 @@ export function SkillForm({ initialData, skillId, onSubmit, isSubmitting }: Skil
     }
   }
 
-  const suggestedTags = getTagsSync().filter(
+  const suggestedTags = availableTags.filter(
     (t) => !currentTags.includes(t.slug)
   ).slice(0, 8)
 

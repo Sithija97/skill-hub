@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { SkillWithRelations } from '@/types/skill'
-import { getSkillById } from '@/lib/services/skill.service'
+import { getSkillByIdAction } from '@/lib/actions/skill.actions'
 
 interface UseSkillReturn {
   skill: SkillWithRelations | null
@@ -19,7 +19,7 @@ export function useSkill(skillId: string): UseSkillReturn {
     let cancelled = false
     async function fetch() {
       try {
-        const data = await getSkillById(skillId)
+        const data = await getSkillByIdAction(skillId)
         if (cancelled) return
         setSkill(data)
         setError(data ? null : 'Skill not found')

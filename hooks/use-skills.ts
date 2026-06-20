@@ -1,13 +1,16 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, useTransition } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { SkillWithRelations } from '@/types/skill'
-import { getSkills } from '@/lib/services/skill.service'
+import { getSkillsAction } from '@/lib/actions/skill.actions'
 import type { SkillFilters } from '@/lib/services/skill.service'
+import type { PaginatedResponse } from '@/types/api'
 
 interface UseSkillsReturn {
   skills: SkillWithRelations[]
   loading: boolean
+  fetching: boolean
+  loadingMore: boolean
   error: string | null
   hasMore: boolean
   loadMore: () => void
@@ -25,48 +28,58 @@ function serializeFilters(filters: SkillFilters): string {
   })
 }
 
-export function useSkills(filters: SkillFilters): UseSkillsReturn {
-  const [skills, setSkills] = useState<SkillWithRelations[]>([])
-  const [isPending, startTransition] = useTransition()
+export function useSkills(
+  filters: SkillFilters,
+  initialData?: PaginatedResponse<SkillWithRelations>
+): UseSkillsReturn {
+  const [skills, setSkills] = useState<SkillWithRelations[]>(initialData?.data ?? [])
   const [error, setError] = useState<string | null>(null)
-  const [hasMore, setHasMore] = useState(false)
-  const [total, setTotal] = useState(0)
-  const [initialLoading, setInitialLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(initialData?.hasMore ?? false)
+  const [total, setTotal] = useState(initialData?.total ?? 0)
+  const [loading, setLoading] = useState(!initialData)
+  const [fetching, setFetching] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const pageRef = useRef(1)
   const serialized = serializeFilters(filters)
+  const isFirstRender = useRef(true)
 
   useEffect(() => {
+    if (isFirstRender.current && initialData) {
+      isFirstRender.current = false
+      return
+    }
+    isFirstRender.current = false
+
     let cancelled = false
     pageRef.current = 1
+    setFetching(true)
 
-    async function fetch() {
+    async function fetchData() {
       try {
-        const result = await getSkills({ ...filters, page: 1 })
+        const result = await getSkillsAction({ ...filters, page: 1 })
         if (cancelled) return
-        startTransition(() => {
-          setSkills(result.data)
-          setTotal(result.total)
-          setHasMore(result.hasMore)
-          setError(null)
-          setInitialLoading(false)
-        })
+        setSkills(result.data)
+        setTotal(result.total)
+        setHasMore(result.hasMore)
+        setError(null)
       } catch {
+        if (!cancelled) setError('Failed to load skills')
+      } finally {
         if (!cancelled) {
-          startTransition(() => {
-            setError('Failed to load skills')
-            setInitialLoading(false)
-          })
+          setFetching(false)
+          setLoading(false)
         }
       }
     }
-    fetch()
+    fetchData()
     return () => { cancelled = true }
   }, [serialized]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMore = useCallback(async () => {
     const nextPage = pageRef.current + 1
+    setLoadingMore(true)
     try {
-      const result = await getSkills({ ...filters, page: nextPage })
+      const result = await getSkillsAction({ ...filters, page: nextPage })
       setSkills((prev) => [...prev, ...result.data])
       setHasMore(result.hasMore)
       setTotal(result.total)
@@ -74,8 +87,10 @@ export function useSkills(filters: SkillFilters): UseSkillsReturn {
       setError(null)
     } catch {
       setError('Failed to load more skills')
+    } finally {
+      setLoadingMore(false)
     }
   }, [filters])
 
-  return { skills, loading: initialLoading || isPending, error, hasMore, loadMore, total }
+  return { skills, loading, fetching, loadingMore, error, hasMore, loadMore, total }
 }

@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { ThemeProvider } from '@/components/shared/theme-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { Toaster } from '@/components/shared/toast'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -28,7 +27,6 @@ export default function RootLayout({
             <TooltipProvider>
               {children}
             </TooltipProvider>
-            <Toaster />
           </ThemeProvider>
         </body>
       </html>

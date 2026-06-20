@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import Link from 'next/link'
 import { IconHeart, IconGitFork } from '@tabler/icons-react'
 import type { SkillWithRelations } from '@/types/skill'
@@ -12,7 +13,7 @@ interface SkillCardProps {
   showAuthor?: boolean
 }
 
-export function SkillCard({ skill, showAuthor = false }: SkillCardProps) {
+export const SkillCard = memo(function SkillCard({ skill, showAuthor = false }: SkillCardProps) {
   return (
     <Link href={`/skills/${skill.id}`} className="no-underline">
       <Card className="flex h-full flex-col transition-colors hover:border-border/80 hover:ring-border">
@@ -73,4 +74,4 @@ export function SkillCard({ skill, showAuthor = false }: SkillCardProps) {
       </Card>
     </Link>
   )
-}
+})
