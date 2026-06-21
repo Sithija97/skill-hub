@@ -2,6 +2,7 @@ import { z } from 'zod/v4'
 import { getSkillById, updateSkill, deleteSkill } from '@/lib/services/skill.service'
 import { requireAuthApi } from '@/lib/auth'
 import { updateSkillSchema } from '@/lib/validations/skill'
+import { invalidateSidebar, invalidateTags } from '@/lib/cache'
 
 export async function GET(
   _req: Request,
@@ -28,6 +29,8 @@ export async function PATCH(
     const body = await req.json()
     const validated = updateSkillSchema.parse(body)
     const skill = await updateSkill(skillId, validated)
+    invalidateSidebar()
+    invalidateTags()
     return Response.json(skill)
   } catch (err) {
     if (err instanceof Response) return err
@@ -52,6 +55,7 @@ export async function DELETE(
     await requireAuthApi()
     const { skillId } = await params
     await deleteSkill(skillId)
+    invalidateSidebar()
     return new Response(null, { status: 204 })
   } catch (err) {
     if (err instanceof Response) return err

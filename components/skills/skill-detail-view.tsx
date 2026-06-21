@@ -1,18 +1,16 @@
-'use client'
-
 import ReactMarkdown from 'react-markdown'
 import { rehypeHighlightConfigured } from '@/lib/rehype-highlight'
 import Link from 'next/link'
-import { IconCopy, IconCheck, IconDownload, IconGitFork } from '@tabler/icons-react'
+import { IconGitFork } from '@tabler/icons-react'
 import type { SkillWithRelations } from '@/types/skill'
 import { TARGET_TOOLS } from '@/config/tools'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { TargetToolBadge } from './target-tool-badge'
 import { PublicPrivateBadge } from './public-private-badge'
-import { useCopy } from '@/hooks/use-copy'
+import { SkillContentActions } from './skill-content-actions'
+import { SkillExportCard } from './skill-export-card'
 import { formatSkillForExport } from '@/lib/services/export.service'
 
 interface SkillDetailViewProps {
@@ -22,18 +20,7 @@ interface SkillDetailViewProps {
   forkedFrom?: { title: string; authorUsername: string } | null
 }
 
-function downloadFile(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
 export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: SkillDetailViewProps) {
-  const { copy, copied } = useCopy()
   const toolConfig = TARGET_TOOLS[skill.targetTool]
   const exportData = formatSkillForExport(skill)
 
@@ -117,25 +104,12 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
           <Card className="overflow-hidden">
             <CardHeader className="flex-row items-center justify-between border-b bg-muted/50">
               <CardTitle className="text-sm">Skill content</CardTitle>
-              <div className="flex gap-1">
-                <Button
-                  variant="outline"
-                  size="xs"
-                  onClick={() => copy(skill.content)}
-                  className={copied ? 'text-green-600' : ''}
-                >
-                  {copied ? <IconCheck size={13} /> : <IconCopy size={13} />}
-                  {copied ? 'Copied!' : 'Copy'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="xs"
-                  onClick={() => downloadFile(exportData.content, exportData.filename, exportData.mimeType)}
-                >
-                  <IconDownload size={13} />
-                  Export
-                </Button>
-              </div>
+              <SkillContentActions
+                content={skill.content}
+                exportContent={exportData.content}
+                exportFilename={exportData.filename}
+                exportMimeType={exportData.mimeType}
+              />
             </CardHeader>
             <CardContent className="p-5">
               <div className="prose">
@@ -171,36 +145,14 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
             </CardContent>
           </Card>
 
-          {/* Export info card */}
-          <Card size="sm">
-            <CardHeader>
-              <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground">
-                EXPORT FOR {toolConfig.label.toUpperCase()}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {toolConfig.exportPath ? (
-                <p className="mb-2 text-xs leading-relaxed text-muted-foreground">
-                  Drop this file into{' '}
-                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{toolConfig.exportPath}</code>{' '}
-                  in your project root
-                </p>
-              ) : (
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  Copy the content or download the file to use with {toolConfig.label}
-                </p>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2 w-full"
-                onClick={() => downloadFile(exportData.content, exportData.filename, exportData.mimeType)}
-              >
-                <IconDownload size={13} />
-                Download {exportData.filename}
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Export card */}
+          <SkillExportCard
+            toolLabel={toolConfig.label}
+            exportPath={toolConfig.exportPath}
+            exportContent={exportData.content}
+            exportFilename={exportData.filename}
+            exportMimeType={exportData.mimeType}
+          />
         </div>
       </div>
     </div>

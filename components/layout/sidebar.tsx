@@ -31,45 +31,50 @@ interface SidebarSection {
   items: SidebarItem[]
 }
 
-const SIDEBAR_SECTIONS: SidebarSection[] = [
-  {
-    title: 'MENU',
-    items: [
-      { label: 'Dashboard', href: '/dashboard', icon: IconLayoutDashboard, matchExact: true },
-      { label: 'Explore', href: '/explore', icon: IconCompass },
-      { label: 'Saved', href: '/saves', icon: IconBookmark, badge: 12 },
-      { label: 'Collections', href: '/collections', icon: IconFolder },
-    ],
-  },
-  {
-    title: 'MY SKILLS',
-    items: [
-      { label: 'Public', href: '/dashboard?filter=public', icon: IconWorld, badge: 8 },
-      { label: 'Private', href: '/dashboard?filter=private', icon: IconLock, badge: 5 },
-      { label: 'Forked', href: '/dashboard?filter=forked', icon: IconGitFork, badge: 3 },
-    ],
-  },
-  {
-    title: 'ACCOUNT',
-    items: [
-      { label: 'Profile', href: '/profile', icon: IconUser },
-      { label: 'Settings', href: '/settings', icon: IconSettings },
-    ],
-  },
-]
-
-function isActive(pathname: string, href: string, matchExact?: boolean): boolean {
-  const basePath = href.split('?')[0]
-  if (matchExact) return pathname === basePath
-  return pathname === basePath || pathname.startsWith(basePath + '/')
+export interface SidebarProps {
+  username?: string
+  counts?: {
+    saved: number
+    public: number
+    private: number
+    forked: number
+    collections: number
+  }
 }
 
-export function Sidebar() {
+export function Sidebar({ username, counts }: SidebarProps) {
   const pathname = usePathname()
+
+  const sections: SidebarSection[] = [
+    {
+      title: 'MENU',
+      items: [
+        { label: 'Dashboard', href: '/dashboard', icon: IconLayoutDashboard, matchExact: true },
+        { label: 'Explore', href: '/explore', icon: IconCompass },
+        { label: 'Saved', href: '/saves', icon: IconBookmark, badge: counts?.saved },
+        { label: 'Collections', href: '/collections', icon: IconFolder, badge: counts?.collections },
+      ],
+    },
+    {
+      title: 'MY SKILLS',
+      items: [
+        { label: 'Public', href: '/dashboard?filter=public', icon: IconWorld, badge: counts?.public },
+        { label: 'Private', href: '/dashboard?filter=private', icon: IconLock, badge: counts?.private },
+        { label: 'Forked', href: '/dashboard?filter=forked', icon: IconGitFork, badge: counts?.forked },
+      ],
+    },
+    {
+      title: 'ACCOUNT',
+      items: [
+        { label: 'Profile', href: username ? `/${username}` : '/settings', icon: IconUser },
+        { label: 'Settings', href: '/settings', icon: IconSettings },
+      ],
+    },
+  ]
 
   return (
     <aside className="flex h-full w-55 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-border bg-background py-3">
-      {SIDEBAR_SECTIONS.map((section, idx) => (
+      {sections.map((section, idx) => (
         <div key={section.title}>
           {idx > 0 && <Separator className="mx-4 my-2" />}
           <div className="mb-1 px-4 text-xs font-semibold tracking-wide text-muted-foreground">
@@ -91,7 +96,7 @@ export function Sidebar() {
                 >
                   <item.icon size={16} className="shrink-0" />
                   <span className="flex-1">{item.label}</span>
-                  {item.badge !== undefined && (
+                  {item.badge !== undefined && item.badge > 0 && (
                     <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-xs font-medium">
                       {item.badge}
                     </Badge>
@@ -104,4 +109,10 @@ export function Sidebar() {
       ))}
     </aside>
   )
+}
+
+function isActive(pathname: string, href: string, matchExact?: boolean): boolean {
+  const basePath = href.split('?')[0]
+  if (matchExact) return pathname === basePath
+  return pathname === basePath || pathname.startsWith(basePath + '/')
 }

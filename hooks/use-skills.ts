@@ -41,14 +41,14 @@ export function useSkills(
   const [loadingMore, setLoadingMore] = useState(false)
   const pageRef = useRef(1)
   const serialized = serializeFilters(filters)
-  const isFirstRender = useRef(true)
+  const initialSerialized = useRef(initialData ? serialized : null)
 
   useEffect(() => {
-    if (isFirstRender.current && initialData) {
-      isFirstRender.current = false
+    if (initialSerialized.current && serialized === initialSerialized.current) {
+      initialSerialized.current = null
       return
     }
-    isFirstRender.current = false
+    initialSerialized.current = null
 
     let cancelled = false
     pageRef.current = 1

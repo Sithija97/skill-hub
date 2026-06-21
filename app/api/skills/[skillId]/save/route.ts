@@ -1,5 +1,6 @@
 import { saveSkill, unsaveSkill } from '@/lib/services/skill.service'
 import { requireAuthApi } from '@/lib/auth'
+import { invalidateSidebar } from '@/lib/cache'
 
 export async function POST(
   _req: Request,
@@ -9,6 +10,7 @@ export async function POST(
     const userId = await requireAuthApi()
     const { skillId } = await params
     await saveSkill(skillId, userId)
+    invalidateSidebar()
     return Response.json({ success: true })
   } catch (err) {
     if (err instanceof Response) return err
@@ -24,6 +26,7 @@ export async function DELETE(
     const userId = await requireAuthApi()
     const { skillId } = await params
     await unsaveSkill(skillId, userId)
+    invalidateSidebar()
     return Response.json({ success: true })
   } catch (err) {
     if (err instanceof Response) return err

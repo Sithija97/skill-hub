@@ -28,13 +28,9 @@ export function SkillsGrid({
     return <SkillGridSkeleton count={6} />
   }
 
-  if (fetching) {
-    return <SkillGridSkeleton count={6} />
-  }
-
   return (
     <div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
+      <div className={`grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 transition-opacity duration-200 ${fetching ? 'opacity-60' : ''}`}>
         {skills.map((skill) => (
           <SkillCard key={skill.id} skill={skill} showAuthor={showAuthor} />
         ))}

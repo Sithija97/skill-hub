@@ -1,5 +1,6 @@
 import { forkSkill } from '@/lib/services/skill.service'
 import { requireAuthApi } from '@/lib/auth'
+import { invalidateSidebar } from '@/lib/cache'
 
 export async function POST(
   _req: Request,
@@ -9,6 +10,7 @@ export async function POST(
     const userId = await requireAuthApi()
     const { skillId } = await params
     const skill = await forkSkill(skillId, userId)
+    invalidateSidebar()
     return Response.json(skill, { status: 201 })
   } catch (err) {
     if (err instanceof Response) return err

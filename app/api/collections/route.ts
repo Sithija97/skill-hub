@@ -1,6 +1,7 @@
 import { requireAuthApi } from '@/lib/auth'
 import { getCollections, createCollection } from '@/lib/services/collection.service'
 import { createCollectionSchema } from '@/lib/validations/collection'
+import { invalidateSidebar } from '@/lib/cache'
 
 export async function GET(req: Request) {
   try {
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
     }
     void userId
     const collection = await createCollection(parsed.data)
+    invalidateSidebar()
     return Response.json(collection, { status: 201 })
   } catch (err) {
     if (err instanceof Response) return err

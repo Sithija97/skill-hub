@@ -3,7 +3,10 @@ import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/auth'
 import { getSkillById, getSkillForkOrigin } from '@/lib/services/skill.service'
 import { TARGET_TOOLS } from '@/config/tools'
-import { SkillDetailClient } from './skill-detail-client'
+import { Breadcrumb } from '@/components/shared/breadcrumb'
+import { SkillDetailView } from '@/components/skills/skill-detail-view'
+import { SkillOwnerActions } from '@/components/skills/skill-owner-actions'
+import { SkillViewerActions } from '@/components/skills/skill-viewer-actions'
 
 type Props = { params: Promise<{ skillId: string }> }
 
@@ -30,6 +33,32 @@ export default async function SkillDetailPage({ params }: Props) {
   if (!skill) redirect('/dashboard')
 
   const forkedFrom = await getSkillForkOrigin(skill.forkedFromId)
+  const isOwner = skill.authorId === userId
 
-  return <SkillDetailClient skill={skill} currentUserId={userId} forkedFrom={forkedFrom} />
+  const sidebar = isOwner ? (
+    <SkillOwnerActions skillId={skill.id} skillTitle={skill.title} />
+  ) : (
+    <SkillViewerActions
+      skillId={skill.id}
+      initialLiked={skill.isLiked ?? false}
+      initialSaved={skill.isSaved ?? false}
+      initialCounts={{ likes: skill.likesCount, saves: skill.savesCount, forks: skill.forksCount }}
+    />
+  )
+
+  return (
+    <SkillDetailView
+      skill={skill}
+      sidebar={sidebar}
+      forkedFrom={forkedFrom}
+      breadcrumb={
+        <Breadcrumb
+          items={[
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: skill.title },
+          ]}
+        />
+      }
+    />
+  )
 }

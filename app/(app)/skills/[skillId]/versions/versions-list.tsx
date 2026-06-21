@@ -2,25 +2,23 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { toast } from 'sonner'
 import { updateSkillAction } from '@/lib/actions/skill.actions'
-import type { SkillWithRelations, SkillVersion } from '@/types/skill'
+import type { SkillVersion } from '@/types/skill'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button, buttonVariants } from '@/components/ui/button'
-import { Breadcrumb } from '@/components/shared/breadcrumb'
+import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { SkillDiff } from '@/components/skills/skill-diff'
-import { IconArrowLeft, IconEye, IconEyeOff, IconArrowBackUp } from '@tabler/icons-react'
+import { IconEye, IconEyeOff, IconArrowBackUp } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 
-interface VersionsClientProps {
-  skill: SkillWithRelations
+interface VersionsListProps {
+  skillId: string
   versions: SkillVersion[]
 }
 
-export function VersionsClient({ skill, versions }: VersionsClientProps) {
+export function VersionsList({ skillId, versions }: VersionsListProps) {
   const router = useRouter()
   const [expandedVersion, setExpandedVersion] = useState<string | null>(null)
   const [restoreTarget, setRestoreTarget] = useState<SkillVersion | null>(null)
@@ -28,9 +26,9 @@ export function VersionsClient({ skill, versions }: VersionsClientProps) {
   const handleRestore = async () => {
     if (!restoreTarget) return
     try {
-      await updateSkillAction(skill.id, { content: restoreTarget.content })
+      await updateSkillAction(skillId, { content: restoreTarget.content })
       toast.success(`Restored to version ${restoreTarget.version}`)
-      router.push(`/skills/${skill.id}`)
+      router.push(`/skills/${skillId}`)
     } catch {
       toast.error('Failed to restore version')
     }
@@ -38,28 +36,7 @@ export function VersionsClient({ skill, versions }: VersionsClientProps) {
   }
 
   return (
-    <div>
-      <Breadcrumb
-        items={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: skill.title, href: `/skills/${skill.id}` },
-          { label: 'Versions' },
-        ]}
-      />
-
-      <div className="mb-6 flex items-center gap-3">
-        <Link
-          href={`/skills/${skill.id}`}
-          className={buttonVariants({ variant: 'outline', size: 'icon-sm' })}
-        >
-          <IconArrowLeft size={16} />
-        </Link>
-        <div>
-          <h1 className="m-0 text-xl font-semibold text-foreground">Version history</h1>
-          <p className="m-0 text-sm text-muted-foreground">{skill.title}</p>
-        </div>
-      </div>
-
+    <>
       <div className="flex flex-col gap-3">
         {versions.length === 0 && (
           <p className="text-sm text-muted-foreground">No version history available.</p>
@@ -151,6 +128,6 @@ export function VersionsClient({ skill, versions }: VersionsClientProps) {
         onConfirm={handleRestore}
         onCancel={() => setRestoreTarget(null)}
       />
-    </div>
+    </>
   )
 }

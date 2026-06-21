@@ -15,7 +15,7 @@ interface SkillCardProps {
 
 export const SkillCard = memo(function SkillCard({ skill, showAuthor = false }: SkillCardProps) {
   return (
-    <Link href={`/skills/${skill.id}`} className="no-underline">
+    <Link href={showAuthor ? `/${skill.author.username}/${skill.id}` : `/skills/${skill.id}`} className="no-underline">
       <Card className="flex h-full flex-col transition-colors hover:border-border/80 hover:ring-border">
         <CardContent className="flex flex-1 flex-col gap-2">
           {/* Title + Tool Badge */}

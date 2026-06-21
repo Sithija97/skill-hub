@@ -1,6 +1,7 @@
 import { requireAuthApi } from '@/lib/auth'
 import { getUserProfile, getUserByUsername, updateUser } from '@/lib/services/user.service'
 import { updateUserSchema } from '@/lib/validations/user'
+import { invalidateUserProfile } from '@/lib/cache'
 
 export async function GET(
   _req: Request,
@@ -43,6 +44,7 @@ export async function PATCH(
     }
 
     const updated = await updateUser(userId, parsed.data)
+    invalidateUserProfile()
     return Response.json(updated)
   } catch (err) {
     if (err instanceof Response) return err

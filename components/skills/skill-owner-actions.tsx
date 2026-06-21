@@ -5,21 +5,23 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { deleteSkillAction } from '@/lib/actions/skill.actions'
-import type { SkillWithRelations } from '@/types/skill'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button, buttonVariants } from '@/components/ui/button'
-import { Breadcrumb } from '@/components/shared/breadcrumb'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
-import { SkillDetailView } from '@/components/skills/skill-detail-view'
 import { IconPencil, IconHistory, IconTrash } from '@tabler/icons-react'
 
-export function SkillDetailClient({ skill, currentUserId, forkedFrom }: { skill: SkillWithRelations; currentUserId: string; forkedFrom?: { title: string; authorUsername: string } | null }) {
+interface SkillOwnerActionsProps {
+  skillId: string
+  skillTitle: string
+}
+
+export function SkillOwnerActions({ skillId, skillTitle }: SkillOwnerActionsProps) {
   const router = useRouter()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const handleDelete = async () => {
     try {
-      await deleteSkillAction(skill.id)
+      await deleteSkillAction(skillId)
       toast.success('Skill deleted')
       router.push('/dashboard')
     } catch {
@@ -28,23 +30,21 @@ export function SkillDetailClient({ skill, currentUserId, forkedFrom }: { skill:
     setShowDeleteDialog(false)
   }
 
-  const isOwner = skill.authorId === currentUserId
-
-  const ownerSidebar = (
+  return (
     <Card size="sm">
       <CardHeader>
         <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground">ACTIONS</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         <Link
-          href={`/skills/${skill.id}/edit`}
+          href={`/skills/${skillId}/edit`}
           className={buttonVariants({ variant: 'outline', size: 'sm', className: 'justify-start gap-2' })}
         >
           <IconPencil size={15} />
           Edit skill
         </Link>
         <Link
-          href={`/skills/${skill.id}/versions`}
+          href={`/skills/${skillId}/versions`}
           className={buttonVariants({ variant: 'outline', size: 'sm', className: 'justify-start gap-2' })}
         >
           <IconHistory size={15} />
@@ -64,28 +64,12 @@ export function SkillDetailClient({ skill, currentUserId, forkedFrom }: { skill:
       <ConfirmDialog
         open={showDeleteDialog}
         title="Delete skill"
-        description={`Are you sure you want to delete "${skill.title}"? This action cannot be undone.`}
+        description={`Are you sure you want to delete "${skillTitle}"? This action cannot be undone.`}
         confirmLabel="Delete"
         variant="destructive"
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteDialog(false)}
       />
     </Card>
-  )
-
-  return (
-    <SkillDetailView
-      skill={skill}
-      sidebar={isOwner ? ownerSidebar : null}
-      forkedFrom={forkedFrom}
-      breadcrumb={
-        <Breadcrumb
-          items={[
-            { label: 'Dashboard', href: '/dashboard' },
-            { label: skill.title },
-          ]}
-        />
-      }
-    />
   )
 }

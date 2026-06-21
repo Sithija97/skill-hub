@@ -3,6 +3,7 @@ import { z } from 'zod/v4'
 import { getSkills, createSkill } from '@/lib/services/skill.service'
 import { requireAuthApi } from '@/lib/auth'
 import { createSkillSchema } from '@/lib/validations/skill'
+import { invalidateSidebar, invalidateTags } from '@/lib/cache'
 import type { SkillFilters } from '@/lib/services/skill.service'
 import { TargetTool } from '@/types/skill'
 
@@ -42,6 +43,8 @@ export async function POST(req: Request) {
     const body = await req.json()
     const validated = createSkillSchema.parse(body)
     const skill = await createSkill(validated)
+    invalidateSidebar()
+    invalidateTags()
     return Response.json(skill, { status: 201 })
   } catch (err) {
     if (err instanceof Response) return err
