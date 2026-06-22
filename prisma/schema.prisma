@@ -65,10 +65,12 @@ model Skill {
   collections  CollectionSkill[]
 
   @@index([authorId])
-  @@index([isPublic])
+  @@index([isPublic, updatedAt(sort: Desc)])
+  @@index([isPublic, likesCount(sort: Desc)])
+  @@index([isPublic, forksCount(sort: Desc)])
   @@index([targetTool])
-  @@index([likesCount])
-  @@index([createdAt])
+  @@index([updatedAt(sort: Desc)])
+  @@index([forksCount(sort: Desc)])
   @@map("skills")
 }
 
@@ -107,6 +109,7 @@ model SkillTag {
   tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([skillId, tagId])
+  @@index([tagId])
   @@map("skill_tags")
 }
 
@@ -126,6 +129,7 @@ model Collection {
   followers   CollectionFollow[]
 
   @@index([authorId])
+  @@index([isPublic, updatedAt(sort: Desc)])
   @@map("collections")
 }
 
@@ -150,6 +154,7 @@ model SkillLike {
   skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   @@id([userId, skillId])
+  @@index([skillId])
   @@map("skill_likes")
 }
 
@@ -162,6 +167,7 @@ model SkillSave {
   skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   @@id([userId, skillId])
+  @@index([skillId])
   @@map("skill_saves")
 }
 
