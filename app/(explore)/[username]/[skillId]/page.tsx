@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PublicSkillPage({ params }: Props) {
   const { username, skillId } = await params
   const skill = await getSkillById(skillId)
-  if (!skill) redirect('/explore')
+  if (!skill) redirect('/')
 
   const forkedFrom = await getSkillForkOrigin(skill.forkedFromId)
 

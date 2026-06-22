@@ -30,7 +30,7 @@ export function TopbarSearch() {
   const handleSubmit = useCallback((value: string) => {
     const q = value.trim()
     if (q) {
-      router.push(`/explore?q=${encodeURIComponent(q)}`)
+      router.push(`/?q=${encodeURIComponent(q)}`)
     }
     setOpen(false)
   }, [router])

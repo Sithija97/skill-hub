@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function UserProfilePage({ params }: Props) {
   const { username } = await params
   const profile = await getUserProfile(username)
-  if (!profile) redirect('/explore')
+  if (!profile) redirect('/')
 
   const [allSkills, collectionsResponse] = await Promise.all([
     getSkillsByUser(profile.id),

@@ -50,7 +50,7 @@ export function Sidebar({ username, counts }: SidebarProps) {
       title: 'MENU',
       items: [
         { label: 'Dashboard', href: '/dashboard', icon: IconLayoutDashboard, matchExact: true },
-        { label: 'Explore', href: '/explore', icon: IconCompass },
+        { label: 'Explore', href: '/', icon: IconCompass },
         { label: 'Saved', href: '/saves', icon: IconBookmark, badge: counts?.saved },
         { label: 'Collections', href: '/collections', icon: IconFolder, badge: counts?.collections },
       ],

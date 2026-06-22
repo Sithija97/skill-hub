@@ -72,7 +72,7 @@ export function ExploreContent({
       if (merged.search) params.set("q", merged.search);
 
       const qs = params.toString();
-      window.history.replaceState(null, "", qs ? `/explore?${qs}` : "/explore");
+      window.history.replaceState(null, "", qs ? `/?${qs}` : "/");
     },
     [filters, setFilters],
   );

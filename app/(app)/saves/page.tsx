@@ -26,7 +26,7 @@ export default async function SavesPage() {
           icon={IconBookmark}
           title="No saved skills yet"
           description="Skills you save will appear here"
-          action={{ label: 'Explore skills', href: '/explore' }}
+          action={{ label: 'Explore skills', href: '/' }}
         />
       )}
     </div>
