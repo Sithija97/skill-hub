@@ -8,7 +8,7 @@
 
 SkillHub is a "GitHub for AI skills" — a web platform where developers create, version, fork, and share AI coding assistant prompts (called "skills") for tools like Claude, Cursor, Copilot, Windsurf, and Continue. Think of it as npm for prompt engineering.
 
-**Current state:** Frontend complete with mock data layer. Backend (database, real API routes) not yet implemented. The mock layer is designed so that wiring the real backend is a one-line import swap per service file.
+**Current state:** Full-stack application with Prisma + Neon PostgreSQL backend fully wired. The mock data layer has been removed — all services now query the real database. Clerk authentication is live with webhook-based user sync. All API routes are implemented and functional. The explore page serves as the main landing page.
 
 ---
 
@@ -26,6 +26,7 @@ SkillHub is a "GitHub for AI skills" — a web platform where developers create,
   - TooltipTrigger uses `render` prop: `<TooltipTrigger render={<Button />}>children</TooltipTrigger>`
   - Dialog's `onOpenChange` signature: `onOpenChange={(isOpen) => { if (!isOpen) onCancel() }}`
 - **Clerk v7** (`@clerk/nextjs@7.5.3`) for auth — NOT Clerk v5/v6. `auth()` returns a Promise.
+- **Prisma 7.8** with `@prisma/adapter-neon` — Neon serverless PostgreSQL
 - **Zustand 5** for client state
 - **Zod v4** — imported as `from 'zod/v4'` (the hookform resolver supports both v3 and v4)
 - **@tabler/icons-react** for icons (not Lucide — Lucide is only used internally by shadcn components)
@@ -44,51 +45,90 @@ SkillHub is a "GitHub for AI skills" — a web platform where developers create,
 skillhub/
 ├── app/
 │   ├── layout.tsx                    # Root layout (ClerkProvider → ThemeProvider → TooltipProvider → Toaster)
-│   ├── globals.css                   # Tailwind imports + shadcn theme variables + tokens + prose
+│   ├── globals.css                   # Tailwind imports + shadcn theme variables + tokens + prose + thin scrollbar
+│   ├── icon.svg                      # SkillHub favicon (lightning bolt in dark circle)
 │   ├── (auth)/                       # Sign-in/sign-up (Clerk components, no layout shell)
-│   ├── (marketing)/                  # Landing page (MarketingNav, no sidebar)
 │   ├── (app)/                        # Authenticated app (Topbar + Sidebar + main content)
-│   │   ├── layout.tsx                # Server component — calls requireAuth(), renders shell
-│   │   ├── dashboard/                # page.tsx (server fetches) → dashboard-client.tsx (client filters/tabs)
+│   │   ├── layout.tsx                # Server component — calls requireAuth(), renders shell with cached sidebar counts
+│   │   ├── loading.tsx               # Group-level skeleton fallback
+│   │   ├── dashboard/
+│   │   │   ├── page.tsx              # Server fetches → dashboard-filters.tsx (client filters/tabs)
+│   │   │   └── loading.tsx           # Skeleton: stat cards + tab bar + skill grid
 │   │   ├── skills/
 │   │   │   ├── new/page.tsx          # Client — uses editor store for draft persistence
 │   │   │   └── [skillId]/
 │   │   │       ├── page.tsx          # Server fetches → skill-detail-client.tsx
 │   │   │       ├── edit/page.tsx     # Server fetches → edit-skill-client.tsx
-│   │   │       └── versions/page.tsx # Server fetches → versions-client.tsx
-│   │   ├── collections/             # Stub pages (not yet implemented)
-│   │   ├── saves/page.tsx           # Stub
-│   │   └── settings/page.tsx        # Stub
+│   │   │       ├── versions/page.tsx # Server fetches → versions-client.tsx
+│   │   │       └── loading.tsx       # Skeleton for skill detail/edit/versions
+│   │   ├── collections/
+│   │   │   ├── page.tsx              # Collections list with server-fetched data
+│   │   │   ├── new/page.tsx          # New collection form (client component)
+│   │   │   ├── loading.tsx           # Skeleton for collections list
+│   │   │   └── [collectionId]/
+│   │   │       ├── page.tsx          # Collection detail with skills list, owner actions
+│   │   │       └── loading.tsx       # Skeleton for collection detail
+│   │   ├── saves/
+│   │   │   ├── page.tsx              # Server-fetched saved skills grid
+│   │   │   └── loading.tsx           # Skeleton: header + skill grid
+│   │   └── settings/page.tsx         # Profile edit form (display name, username, bio)
 │   ├── (explore)/                    # Public browsing (Topbar, no sidebar, max-width centered)
+│   │   ├── page.tsx                  # Main landing — hero + explore content with server-prefetched data
 │   │   ├── explore/
-│   │   │   ├── page.tsx              # Server with Suspense → explore-content.tsx (client, uses useSearchParams)
+│   │   │   ├── page.tsx              # Explore with Suspense → explore-content.tsx
+│   │   │   ├── explore-content.tsx   # Client — search, filters, skills grid, load more
+│   │   │   └── loading.tsx           # Skeleton for explore page
 │   │   └── [username]/
 │   │       ├── page.tsx              # Server fetches → profile-client.tsx
-│   │       └── [skillId]/page.tsx    # Server fetches → public-skill-client.tsx
-│   └── api/                          # Route handlers (all stubs returning 501, ready for backend wiring)
+│   │       ├── loading.tsx           # Skeleton for user profile
+│   │       └── [skillId]/
+│   │           ├── page.tsx          # Server fetches → public-skill-client.tsx
+│   │           └── loading.tsx       # Skeleton for public skill detail
+│   └── api/
+│       ├── webhooks/clerk/route.ts   # Clerk webhook — user.created/updated/deleted sync
+│       ├── skills/
+│       │   ├── route.ts              # GET (list with filters), POST (create)
+│       │   └── [skillId]/
+│       │       ├── route.ts          # GET, PATCH, DELETE
+│       │       ├── like/route.ts     # POST/DELETE
+│       │       ├── save/route.ts     # POST/DELETE (+ sidebar cache invalidation)
+│       │       ├── fork/route.ts     # POST (+ sidebar cache invalidation)
+│       │       ├── export/route.ts   # GET (file download)
+│       │       └── versions/route.ts # GET
+│       ├── tags/route.ts             # GET (all tags)
+│       ├── users/[username]/route.ts # GET (profile), PATCH (update with username uniqueness check)
+│       └── collections/
+│           ├── route.ts              # GET (list), POST (create)
+│           └── [collectionId]/
+│               ├── route.ts          # GET, PATCH, DELETE
+│               └── follow/route.ts   # POST/DELETE
 ├── components/
 │   ├── ui/                           # shadcn primitives (Button, Card, Badge, Input, Dialog, Tabs, Select, etc.)
-│   ├── layout/                       # Topbar, Sidebar, MarketingNav, ThemeToggle, UserButton, NewSkillButton
-│   ├── skills/                       # SkillCard, SkillForm, SkillDetailView, TargetToolBadge, etc.
+│   ├── layout/                       # Topbar, TopbarSearch, Sidebar, ThemeToggle, UserButton, NewSkillButton
+│   ├── skills/                       # SkillCard, SkillForm (+ memo'd ContentEditor), SkillDetailView,
+│   │                                 # SkillViewerActions, SkillOwnerActions, SkillContentActions,
+│   │                                 # SkillExportCard, SkillDiff, SkillEditorSidebar, TargetToolBadge,
+│   │                                 # PublicPrivateBadge
 │   ├── collections/                  # CollectionCard, FollowButton
 │   ├── explore/                      # ExploreFilters, SkillsGrid, TrendingPanel
-│   └── shared/                       # Breadcrumb, ConfirmDialog, EmptyState, LoadingSkeleton, Toast, ThemeProvider
+│   ├── settings/                     # SettingsForm (profile edit with react-hook-form + Zod validation)
+│   └── shared/                       # Breadcrumb, ConfirmDialog, EmptyState, LoadingSkeleton, Toast,
+│                                     # ThemeProvider, ClientTabs
 ├── lib/
-│   ├── auth.ts                       # getCurrentUser(), requireAuth() — wraps Clerk's auth()
-│   ├── utils.ts                      # cn() utility (clsx + tailwind-merge)
-│   ├── mock/                         # Mock data layer
-│   │   ├── data/                     # Raw mock data (users, skills, tags, versions, collections)
-│   │   ├── skills.mock.ts            # Mock service functions with SkillFilters, CreateSkillInput types
-│   │   ├── collections.mock.ts       # Mock collection service
-│   │   └── users.mock.ts             # Mock user service
-│   ├── services/                     # Service layer (components import from HERE, never from mock/)
-│   │   ├── skill.service.ts          # Re-exports from mock — swap to Prisma calls in backend phase
-│   │   ├── collection.service.ts
-│   │   ├── user.service.ts
-│   │   ├── tag.service.ts
+│   ├── db.ts                         # PrismaClient with Neon adapter (singleton pattern)
+│   ├── auth.ts                       # getCurrentUser(), requireAuth(), requireAuthApi(), getCurrentDbUser()
+│   ├── cache.ts                      # unstable_cache wrappers: sidebar counts, username, tags + invalidation helpers
+│   ├── generated/prisma/             # Prisma generated client (output target)
+│   ├── services/                     # Service layer (all backed by Prisma now)
+│   │   ├── skill.service.ts          # Full CRUD + like/unlike/save/unsave/fork/versions + batch engagement checks
+│   │   ├── collection.service.ts     # Full CRUD + add/remove skills + follow/unfollow
+│   │   ├── user.service.ts           # getUserById, getUserByUsername, getUserProfile, updateUser
+│   │   ├── tag.service.ts            # getTags()
 │   │   └── export.service.ts         # formatSkillForExport() — pure logic, no API call
 │   └── validations/
-│       └── skill.ts                  # Zod schemas: createSkillSchema, updateSkillSchema, skillFiltersSchema
+│       ├── skill.ts                  # Zod schemas: createSkillSchema, updateSkillSchema
+│       ├── user.ts                   # updateUserSchema
+│       └── collection.ts             # createCollectionSchema, updateCollectionSchema
 ├── hooks/
 │   ├── use-copy.ts                   # Clipboard copy with 2s confirmation
 │   ├── use-skill.ts                  # Single skill fetcher hook
@@ -108,6 +148,10 @@ skillhub/
 ├── styles/
 │   ├── tokens.css                    # GitHub-inspired design tokens (colors, spacing, radius, fonts)
 │   └── prose.css                     # Markdown rendering styles
+├── prisma/
+│   ├── schema.prisma                 # Full schema with all models, relations, and indexes
+│   ├── seed.ts                       # Database seed script (tsx runner)
+│   └── migrations/                   # Migration history (init migration applied)
 └── proxy.ts                          # Next.js 16 proxy (was middleware.ts) — Clerk route protection
 ```
 
@@ -125,21 +169,26 @@ This is the most critical architectural decision. We follow a strict pattern:
 4. **Client components CAN be children of server components** — Next.js handles the boundary. Don't mark a parent as client just because it renders a client child.
 
 Current server/client classification:
-- **Server components (no 'use client'):** Topbar, MarketingNav, UserButton, Sidebar items, SkillCard, SkillEditorSidebar, SkillDiff, LoadingSkeleton, Breadcrumb, EmptyState, CollectionCard, PublicPrivateBadge, all shadcn UI wrappers
-- **Client components ('use client'):** ThemeToggle, NewSkillButton, FollowButton, Sidebar (usePathname), SkillForm (react-hook-form), SkillDetailView (useCopy), ExploreFilters (useState), SkillsGrid (onClick), TrendingPanel (onClick), ConfirmDialog (Dialog state), Toast (useTheme), TargetToolBadge (useTheme), all page `-client.tsx` files
+- **Server components (no 'use client'):** Topbar, UserButton, Sidebar items, SkillCard, SkillEditorSidebar, SkillDiff, LoadingSkeleton, Breadcrumb, EmptyState, CollectionCard, PublicPrivateBadge, all shadcn UI wrappers
+- **Client components ('use client'):** ThemeToggle, TopbarSearch, NewSkillButton, FollowButton, Sidebar (usePathname), SkillForm (react-hook-form) + ContentEditor (memo'd, useController), SkillDetailView (useCopy), SkillViewerActions, SkillOwnerActions, SkillContentActions, ExploreFilters (useState), SkillsGrid (onClick), TrendingPanel (onClick), ConfirmDialog (Dialog state), Toast (useTheme), TargetToolBadge (useTheme), SettingsForm (react-hook-form), ClientTabs, all page `-client.tsx` files
 
 ### The Service Layer Pattern
 
 ```
-Components → lib/services/*.service.ts → lib/mock/*.mock.ts
-                                          ↑
-                                    (swap to Prisma here)
+Components → lib/services/*.service.ts → Prisma (lib/db.ts → Neon PostgreSQL)
 ```
 
-- Components ONLY import from `lib/services/`. Never from `lib/mock/` directly.
-- Each service file currently re-exports from the mock layer.
-- When wiring the real backend, replace the re-exports with actual Prisma/DB calls. Zero component changes needed.
-- Service function signatures and return types are already defined — don't change them.
+- Components ONLY import from `lib/services/`. Never from `lib/db.ts` directly (except `lib/cache.ts` and `lib/auth.ts`).
+- Each service function maps Prisma results to the app's TypeScript types (Date → ISO string, join tables → flat arrays).
+- Service function signatures and return types are stable — don't change them without updating all callers.
+
+### Caching Strategy
+
+- `lib/cache.ts` uses `unstable_cache` with tag-based revalidation for:
+  - **Sidebar counts** (saved, public, private, forked, collections) — `revalidate: 60`, tag: `sidebar`
+  - **Username lookup** — `revalidate: 300`, tag: `user-profile`
+  - **All tags** — `revalidate: 300`, tag: `tags`
+- API routes call `invalidateSidebar()`, `invalidateTags()`, or `invalidateUserProfile()` after mutations.
 
 ### Styling Rules
 
@@ -149,6 +198,8 @@ Components → lib/services/*.service.ts → lib/mock/*.mock.ts
 - **Hover states via Tailwind** `hover:` utilities — no `onMouseEnter`/`onMouseLeave` event handlers for styling.
 - **GitHub-inspired theme:** dark header bar (`--color-bg-header`), system font stack, 6px border radius, GitHub Primer color palette, `font-weight: 600` for emphasis.
 - Both light and dark mode must work. Dark mode tokens are in `styles/tokens.css` under `.dark` and `@media (prefers-color-scheme: dark)`.
+- **Thin scrollbars globally:** `scrollbar-width: thin` + WebKit `::-webkit-scrollbar` (6px width, `--border` color thumb). Applied in `globals.css` base layer.
+- **Scroll containment:** Both `(app)` and `(explore)` layouts use `h-screen` on the outer wrapper with `overflow-y-auto` on the main content area. The topbar stays fixed while only content scrolls — the browser scrollbar appears only on the content region, not the full page.
 
 ### Next.js 16 Specifics
 
@@ -166,7 +217,36 @@ Components → lib/services/*.service.ts → lib/mock/*.mock.ts
 
 ---
 
-## 5. Data Model
+## 5. Database
+
+### Provider
+
+**Neon PostgreSQL** via `@prisma/adapter-neon` serverless driver. The Prisma client is configured in `lib/db.ts` with a singleton pattern for dev HMR safety.
+
+### Schema (`prisma/schema.prisma`)
+
+**Models:** User, Skill, SkillVersion, Tag, SkillTag (join), Collection, CollectionSkill (join), SkillLike, SkillSave, CollectionFollow
+
+**Key design decisions:**
+- User `id` is the Clerk userId (not auto-generated) — set via webhook sync
+- Skill uses denormalized counters (`likesCount`, `savesCount`, `forksCount`) updated in transactions
+- SkillVersion stores full content snapshots (not diffs), ordered by `version` number
+- Tag has both `name` (display) and `slug` (URL/filter) fields, both unique
+- All join tables use composite primary keys
+- Cascade deletes on User→Skills, Skill→Versions/Tags/Likes/Saves, Collection→Skills/Follows
+
+**Indexes optimized for common queries:**
+- `skills(authorId)`, `skills(isPublic, updatedAt DESC)`, `skills(isPublic, likesCount DESC)`, `skills(isPublic, forksCount DESC)`, `skills(targetTool)`, `skills(updatedAt DESC)`, `skills(forksCount DESC)`
+- `skill_versions(skillId)`, `skill_tags(tagId)`, `skill_likes(skillId)`, `skill_saves(skillId)`
+- `collections(authorId)`, `collections(isPublic, updatedAt DESC)`
+
+### Seeding
+
+`prisma/seed.ts` (run via `tsx`) populates the database with test data. Configured in `package.json` under `prisma.seed`.
+
+---
+
+## 6. Data Model (TypeScript types)
 
 ### TargetTool (enum)
 `CLAUDE | CURSOR | COPILOT | WINDSURF | CONTINUE | OTHER`
@@ -180,11 +260,18 @@ Adds: `author: User, tags: Tag[], versions: SkillVersion[], isLiked: boolean, is
 ### User
 `id (Clerk userId), username, displayName, bio, avatarUrl, createdAt, updatedAt`
 
+### UserProfile (extends User)
+Adds: `skillsCount, followersCount`
+
 ### Collection
 `id, name, description, isPublic, authorId, createdAt, updatedAt`
 
+### CollectionWithSkills (extends Collection)
+Adds: `skills: Skill[]`
+
 ### Service Function Signatures (must not change)
 ```typescript
+// Skills
 getSkills(filters?: SkillFilters): Promise<PaginatedResponse<SkillWithRelations>>
 getSkillById(id: string): Promise<SkillWithRelations | null>
 getSkillsByUser(userId: string): Promise<SkillWithRelations[]>
@@ -196,86 +283,127 @@ likeSkill(id: string, userId: string): Promise<void>
 unlikeSkill(id: string, userId: string): Promise<void>
 saveSkill(id: string, userId: string): Promise<void>
 unsaveSkill(id: string, userId: string): Promise<void>
+getSavedSkillsByUser(userId: string): Promise<SkillWithRelations[]>
+getSkillForkOrigin(forkedFromId: string | null): Promise<{ title: string; authorUsername: string } | null>
 getSkillVersions(skillId: string): Promise<SkillVersion[]>
+
+// Collections
+getCollections(userId?: string): Promise<PaginatedResponse<CollectionWithSkills>>
+getCollectionById(id: string): Promise<CollectionWithSkills | null>
+createCollection(data: CreateCollectionInput): Promise<CollectionWithSkills>
+updateCollection(id: string, data: UpdateCollectionInput): Promise<CollectionWithSkills>
+deleteCollection(id: string): Promise<void>
+addSkillToCollection(collectionId: string, skillId: string): Promise<void>
+removeSkillFromCollection(collectionId: string, skillId: string): Promise<void>
+followCollection(collectionId: string, userId: string): Promise<void>
+unfollowCollection(collectionId: string, userId: string): Promise<void>
+
+// Users
+getUserById(id: string): Promise<User | null>
+getUserByUsername(username: string): Promise<User | null>
+getUserProfile(username: string): Promise<UserProfile | null>
+updateUser(id: string, data: Partial<Pick<User, 'displayName' | 'username' | 'bio'>>): Promise<User>
+
+// Tags
+getTags(): Promise<Tag[]>
 ```
 
 ---
 
-## 6. Authentication
+## 7. Authentication
 
 - **Clerk v7** handles all auth. `@clerk/nextjs@7.5.3`.
 - `proxy.ts` protects all routes except: `/`, `/explore`, `/sign-in(.*)`, `/sign-up(.*)`, `/api/webhooks/clerk`, `/:username/:skillId`
-- `lib/auth.ts` exports `getCurrentUser()` and `requireAuth()` — wrappers around Clerk's `auth()`.
+- `lib/auth.ts` exports:
+  - `getCurrentUser()` — cached via React `cache()`, returns `{ userId, sessionId } | null`
+  - `requireAuth()` — redirects to `/sign-in` if not authenticated
+  - `requireAuthApi()` — throws 401 Response if not authenticated, returns `userId`
+  - `getCurrentDbUser()` — fetches the full User record from database
 - The `(app)` layout calls `await requireAuth()` — redirects to `/sign-in` if not authenticated.
-- Currently using mock user `user_mock_current` (id: `'user_mock_current'`, username: `'johndoe'`). Replace with real Clerk userId when wiring backend.
+- **Clerk webhook** (`app/api/webhooks/clerk/route.ts`) syncs user data on `user.created`, `user.updated`, `user.deleted` events using `verifyWebhook()`.
 
 ---
 
-## 7. What's Built vs. What's Remaining
+## 8. What's Built vs. What's Remaining
 
-### BUILT (frontend complete with mock data):
-- Auth flow (Clerk sign-in/sign-up, protected routes)
-- App shell (Topbar with dark header, Sidebar with active states, theme toggle)
-- Dashboard (stats, tabs, tool filters, sort, skill cards grid)
-- Skill CRUD (create with markdown editor, edit with pre-fill, delete with confirmation)
-- Skill detail view (owner view with edit/delete, public view with like/save/fork)
-- Version history (timeline, diff view, restore)
-- Explore page (search, tool/tag/sort filters, URL-synced state, trending panel, load more)
-- Public user profiles (avatar, bio, stats, skills/collections tabs)
-- Export service (format skills for Claude/Cursor/Copilot/Windsurf/Continue)
-- Full mock data layer (5 users, 21 skills, 20 tags, 17 versions, 4 collections)
+### BUILT (fully functional with real database):
+- **Auth flow:** Clerk sign-in/sign-up, protected routes, webhook user sync
+- **App shell:** Topbar with dark header + search (keyboard shortcut `/`), Sidebar with real counts (cached), theme toggle
+- **Dashboard:** Stats, tabs, tool filters, sort, skill cards grid — all server-fetched
+- **Skill CRUD:** Create with markdown editor, edit with pre-fill, delete with confirmation — all via API routes + Prisma
+- **Skill engagement:** Like/unlike, save/unsave, fork — with denormalized counters in transactions
+- **Skill detail view:** Owner view (edit/delete/export), public view (like/save/fork), fork origin display
+- **Version history:** Timeline, diff view — versions stored as full snapshots
+- **Explore / Landing page:** The explore page IS the landing page (`/`). Hero + search, tool/tag/sort filters, URL-synced state, trending panel, load more pagination
+- **Public user profiles:** Avatar, bio, stats, skills tab — server-fetched
+- **Collections:** Full CRUD (list, create, detail with skills, edit, delete), follow/unfollow, add/remove skills
+- **Saves page:** Server-fetched saved skills grid with empty state
+- **Settings page:** Profile edit form (display name, username with uniqueness check, bio) via API
+- **Export service:** Format skills for Claude/Cursor/Copilot/Windsurf/Continue (file download)
+- **All API routes:** Fully implemented with Zod validation, auth guards, error handling, cache invalidation
+- **Database:** Prisma schema with migrations, indexes, seed data, Neon PostgreSQL
+- **Caching:** `unstable_cache` with tag-based revalidation for sidebar counts, username, and tags
 
 ### REMAINING (next development phases):
-- **Database:** Set up Prisma with PostgreSQL. Schema should mirror the types in `types/`.
-- **Backend wiring:** Replace mock re-exports in `lib/services/*.service.ts` with real Prisma calls.
-- **API routes:** Implement the stub route handlers in `app/api/` — they currently return 501.
-- **Clerk webhook:** `app/api/webhooks/clerk/route.ts` — sync Clerk user data to the database.
-- **Real user context:** Replace hardcoded `'user_mock_current'` with actual Clerk userId from `auth()`.
-- **Collections CRUD:** The stub pages at `/collections/new` and `/collections/[id]` need full implementation.
-- **Saves page:** `/saves` needs implementation (list user's saved skills).
-- **Settings page:** `/settings` needs implementation (profile edit form).
-- **Search:** The search bar in the topbar is a placeholder — needs real search implementation.
-- **Marketing landing page:** `/` is a stub div.
-- **Pagination:** Explore page has "Load more" wired to mock — needs real paginated API.
-- **Real-time like/save counts:** Currently optimistic-only against mock data.
-- **Error boundaries:** Add proper error.tsx files for each route segment.
-- **SEO:** Add generateMetadata to dynamic pages.
+- **Marketing landing page:** The `/` route currently shows explore content. A dedicated marketing/hero page for unauthenticated users could be added.
+- **Full-text search:** Search works via Prisma `contains` (case-insensitive). Could upgrade to PostgreSQL full-text search or a dedicated search service for better relevance.
+- **Collection skill management UI:** The API supports add/remove skills, but there's no UI flow to add skills to a collection from a skill detail page.
+- **Followers count:** `UserProfile.followersCount` is hardcoded to 0 — needs a followers table or count query.
+- **Error boundaries:** Add proper `error.tsx` files for each route segment (all `loading.tsx` files are in place).
+- **SEO:** Add `generateMetadata` to remaining dynamic pages (profile and public skill pages already have it).
 - **Testing:** No tests yet — add Vitest + React Testing Library.
 - **CI/CD:** No GitHub Actions or deployment config yet.
+- **Rate limiting:** No rate limiting on API routes.
+- **Image uploads:** Avatar managed through Clerk; no custom image upload support.
 
 ---
 
-## 8. Performance Optimizations Already Applied
+## 9. Performance Optimizations Already Applied
 
+### Data Layer
+- `unstable_cache` with tag-based revalidation for sidebar counts, username, tags (avoids redundant DB queries)
+- Batch engagement checks (`batchCheckLikedSaved`) to avoid N+1 queries on skill lists
+- `omit: { content: true }` on all list/grid queries (`getSkills`, `getSkillsByUser`, `getSavedSkillsByUser`) — the large `@db.Text` content column is excluded from dashboard, explore, saves, and profile pages where only SkillCard metadata is rendered. Detail pages (`getSkillById`) still fetch full content.
+- Database indexes on all common query patterns (see Section 5)
+- Prisma `include` preloads used to avoid waterfall queries
+
+### Rendering
 - Server components for data fetching (no loading spinners — data available at first render)
-- 15 components converted from client → server (reduced client JS bundle)
-- `@uiw/react-md-editor` loaded via `dynamic()` with loading skeleton
-- Editor chunk prefetched on hover of "New skill" button
+- `loading.tsx` skeletons on every route segment for instant navigation feedback
+- `@uiw/react-md-editor` loaded via `dynamic()` with loading skeleton; chunk prefetched on hover of "New skill" button
+- **ContentEditor isolation:** MDEditor extracted into a `memo`-wrapped component using `useController` — only re-renders when content changes, completely isolated from sibling field changes in the form
+- **Debounced draft sync:** `watch(callback)` with 300ms debounce for Zustand editor store sync — prevents cascading parent re-renders on every keystroke
 - `useSyncExternalStore` for mounted state (avoids React Compiler issues)
-- Tailwind classes instead of inline styles (better CSS optimization)
 - `useMemo` for filtered/sorted lists in dashboard and explore
 
+### CSS & Layout
+- Tailwind classes instead of inline styles (better CSS optimization)
+- Scroll containment: `h-screen` + `overflow-y-auto` on main content — scrollbar only on content area, not full page
+- Thin scrollbar styling (6px, `scrollbar-width: thin`)
+
 ---
 
-## 9. File Naming Conventions
+## 10. File Naming Conventions
 
 - `page.tsx` — Next.js page (server component by default)
 - `*-client.tsx` — Client component companion to a server page
 - `*.service.ts` — Service layer (the import boundary between UI and data)
-- `*.mock.ts` — Mock implementations
 - `*.tsx` in `components/` — Reusable UI components
 - `use-*.ts` in `hooks/` — Custom React hooks
 - `*-store.ts` in `store/` — Zustand stores
 
 ---
 
-## 10. Commands
+## 11. Commands
 
 ```bash
 npm run dev      # Start dev server (Turbopack)
 npm run build    # Production build
 npm run lint     # ESLint check
 npx tsc --noEmit # TypeScript type check
+npx prisma db push    # Push schema to database
+npx prisma generate   # Regenerate Prisma client
+npx prisma db seed    # Run seed script
 ```
 
 The build MUST pass with zero TypeScript errors and zero ESLint errors before any commit. The only acceptable warning is the react-hook-form `incompatible-library` informational notice.

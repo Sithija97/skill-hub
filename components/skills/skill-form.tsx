@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react'
+import { useForm, useController, Controller } from 'react-hook-form'
+import type { Control } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import dynamic from 'next/dynamic'
 import { useTheme } from 'next-themes'
@@ -38,6 +39,27 @@ const MDEditor = dynamic(() => import('@uiw/react-md-editor'), {
   ),
 })
 
+const ContentEditor = memo(function ContentEditor({
+  control,
+  theme,
+}: {
+  control: Control<CreateSkillInput>
+  theme: string | undefined
+}) {
+  const { field } = useController({ name: 'content', control })
+
+  return (
+    <div data-color-mode={theme === 'dark' ? 'dark' : 'light'}>
+      <MDEditor
+        value={field.value}
+        onChange={(val) => field.onChange(val ?? '')}
+        height={400}
+        preview="live"
+      />
+    </div>
+  )
+})
+
 interface SkillFormProps {
   initialData?: Partial<CreateSkillInput>
   skillId?: string
@@ -70,23 +92,21 @@ export function SkillForm({ initialData, skillId, onSubmit, isSubmitting, availa
     },
   })
 
-  const watchedTitle = watch('title')
-  const watchedDescription = watch('description')
-  const watchedContent = watch('content')
-  const watchedTargetTool = watch('targetTool')
-  const watchedIsPublic = watch('isPublic')
   const watchedTags = watch('tags')
 
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => {
-    setDraft({
-      title: watchedTitle,
-      description: watchedDescription,
-      content: watchedContent,
-      targetTool: watchedTargetTool,
-      isPublic: watchedIsPublic,
-      tags: watchedTags,
+    const { unsubscribe } = watch((values) => {
+      clearTimeout(draftTimerRef.current)
+      draftTimerRef.current = setTimeout(() => {
+        setDraft(values as Partial<CreateSkillInput>)
+      }, 300)
     })
-  }, [watchedTitle, watchedDescription, watchedContent, watchedTargetTool, watchedIsPublic, watchedTags, setDraft])
+    return () => {
+      unsubscribe()
+      clearTimeout(draftTimerRef.current)
+    }
+  }, [watch, setDraft])
 
   const handleFormSubmit = async (data: CreateSkillInput) => {
     await onSubmit(data)
@@ -190,20 +210,7 @@ export function SkillForm({ initialData, skillId, onSubmit, isSubmitting, availa
         <p className="mb-2 text-xs text-muted-foreground">
           Write your skill in markdown. This is the actual prompt/instruction.
         </p>
-        <Controller
-          name="content"
-          control={control}
-          render={({ field }) => (
-            <div data-color-mode={resolvedTheme === 'dark' ? 'dark' : 'light'}>
-              <MDEditor
-                value={field.value}
-                onChange={(val) => field.onChange(val ?? '')}
-                height={400}
-                preview="live"
-              />
-            </div>
-          )}
-        />
+        <ContentEditor control={control} theme={resolvedTheme} />
         {errors.content && <p className="mt-1 text-xs text-destructive">{errors.content.message}</p>}
       </div>
 

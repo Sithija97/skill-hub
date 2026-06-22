@@ -42,10 +42,12 @@ const skillListInclude = {
   tags: { include: { tag: true } },
 } as const
 
+const skillListOmit = { content: true } as const
+
 // ── Types ──
 
 type PrismaSkillDetailRow = Awaited<ReturnType<typeof db.skill.findFirst<{ include: typeof skillDetailInclude }>>>
-type PrismaSkillListRow = Awaited<ReturnType<typeof db.skill.findFirst<{ include: typeof skillListInclude }>>>
+type PrismaSkillListRow = Awaited<ReturnType<typeof db.skill.findFirst<{ include: typeof skillListInclude; omit: typeof skillListOmit }>>>
 
 // ── Mappers ──
 
@@ -146,7 +148,7 @@ function mapSkillListRow(
     id: row.id,
     title: row.title,
     description: row.description,
-    content: row.content,
+    content: '',
     targetTool: row.targetTool as TargetTool,
     isPublic: row.isPublic,
     version: row.version,
@@ -245,6 +247,7 @@ export async function getSkills(
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: skillListInclude,
+      omit: skillListOmit,
     }),
     db.skill.count({ where }),
   ])
@@ -283,6 +286,7 @@ export async function getSkillsByUser(
     },
     orderBy: { updatedAt: 'desc' },
     include: skillListInclude,
+    omit: skillListOmit,
   })
 
   const engagements = await batchCheckLikedSaved(rows.map((r) => r.id), viewerId)
@@ -485,7 +489,7 @@ export async function getSavedSkillsByUser(
     where: { userId },
     orderBy: { createdAt: 'desc' },
     include: {
-      skill: { include: skillListInclude },
+      skill: { include: skillListInclude, omit: skillListOmit },
     },
   })
 
