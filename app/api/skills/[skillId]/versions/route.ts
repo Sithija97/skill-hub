@@ -10,6 +10,7 @@ export async function GET(
     return Response.json(versions)
   } catch (err) {
     if (err instanceof Response) return err
+    console.error('[API skills/versions]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

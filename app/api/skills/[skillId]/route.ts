@@ -15,6 +15,7 @@ export async function GET(
     return Response.json(skill)
   } catch (err) {
     if (err instanceof Response) return err
+    console.error('[API skills/skillId]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -43,6 +44,7 @@ export async function PATCH(
     if (err instanceof Error && err.message.includes('not found')) {
       return Response.json({ error: 'Skill not found' }, { status: 404 })
     }
+    console.error('[API skills/skillId]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -65,6 +67,7 @@ export async function DELETE(
     if (err instanceof Error && err.message.includes('not found')) {
       return Response.json({ error: 'Skill not found' }, { status: 404 })
     }
+    console.error('[API skills/skillId]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

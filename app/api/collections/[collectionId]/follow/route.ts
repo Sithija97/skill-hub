@@ -12,6 +12,7 @@ export async function POST(
     return Response.json({ success: true })
   } catch (err) {
     if (err instanceof Response) return err
+    console.error('[API collections/follow]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -27,6 +28,7 @@ export async function DELETE(
     return Response.json({ success: true })
   } catch (err) {
     if (err instanceof Response) return err
+    console.error('[API collections/follow]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

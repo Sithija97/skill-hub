@@ -51,8 +51,34 @@ export async function POST(req: NextRequest) {
     case 'user.deleted': {
       const { id } = event.data
       if (id) {
-        await db.user.delete({ where: { id } }).catch((err) => {
-          console.error(`Webhook user.deleted: user ${id} not found:`, err)
+        await db.$transaction(async (tx) => {
+          const likedSkillIds = (await tx.skillLike.findMany({
+            where: { userId: id },
+            select: { skillId: true },
+          })).map((l) => l.skillId)
+
+          const savedSkillIds = (await tx.skillSave.findMany({
+            where: { userId: id },
+            select: { skillId: true },
+          })).map((s) => s.skillId)
+
+          if (likedSkillIds.length > 0) {
+            await tx.skill.updateMany({
+              where: { id: { in: likedSkillIds } },
+              data: { likesCount: { decrement: 1 } },
+            })
+          }
+
+          if (savedSkillIds.length > 0) {
+            await tx.skill.updateMany({
+              where: { id: { in: savedSkillIds } },
+              data: { savesCount: { decrement: 1 } },
+            })
+          }
+
+          await tx.user.delete({ where: { id } })
+        }).catch((err) => {
+          console.error(`Webhook user.deleted: failed for ${id}:`, err)
         })
       }
       break

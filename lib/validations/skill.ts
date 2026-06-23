@@ -10,7 +10,10 @@ export const createSkillSchema = z.object({
     .string()
     .min(10, 'Description must be at least 10 characters')
     .max(500, 'Description must be under 500 characters'),
-  content: z.string().min(20, 'Content must be at least 20 characters'),
+  content: z
+    .string()
+    .min(20, 'Content must be at least 20 characters')
+    .max(100000, 'Content must be under 100,000 characters'),
   targetTool: z.nativeEnum(TargetTool),
   isPublic: z.boolean(),
   tags: z

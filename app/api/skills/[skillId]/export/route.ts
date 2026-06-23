@@ -19,6 +19,7 @@ export async function GET(
     })
   } catch (err) {
     if (err instanceof Response) return err
+    console.error('[API skills/export]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

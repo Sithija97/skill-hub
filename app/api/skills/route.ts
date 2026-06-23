@@ -4,6 +4,7 @@ import { getSkills, createSkill } from '@/lib/services/skill.service'
 import { requireAuthApi } from '@/lib/auth'
 import { createSkillSchema } from '@/lib/validations/skill'
 import { invalidateSidebar, invalidateTags } from '@/lib/cache'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 import type { SkillFilters } from '@/lib/services/skill.service'
 import { TargetTool } from '@/types/skill'
 
@@ -27,19 +28,21 @@ export async function GET(req: NextRequest) {
     const page = sp.get('page')
     if (page) filters.page = parseInt(page, 10)
     const pageSize = sp.get('pageSize')
-    if (pageSize) filters.pageSize = parseInt(pageSize, 10)
+    if (pageSize) filters.pageSize = Math.min(parseInt(pageSize, 10), 100)
 
     const result = await getSkills(filters)
     return Response.json(result)
   } catch (err) {
     if (err instanceof Response) return err
+    console.error('[API skills]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(req: Request) {
   try {
-    await requireAuthApi()
+    const userId = await requireAuthApi()
+    if (!rateLimit(`create-skill:${userId}`, 10, 60_000)) return rateLimitResponse()
     const body = await req.json()
     const validated = createSkillSchema.parse(body)
     const skill = await createSkill(validated)
@@ -51,6 +54,7 @@ export async function POST(req: Request) {
     if (err instanceof z.ZodError) {
       return Response.json({ error: err.issues }, { status: 400 })
     }
+    console.error('[API skills]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

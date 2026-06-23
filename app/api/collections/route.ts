@@ -11,6 +11,7 @@ export async function GET(req: Request) {
     return Response.json(result)
   } catch (err) {
     if (err instanceof Response) return err
+    console.error('[API collections]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
     return Response.json(collection, { status: 201 })
   } catch (err) {
     if (err instanceof Response) return err
+    console.error('[API collections]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
