@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { Prisma } from '@/lib/generated/prisma/client'
 import { getCurrentUser } from '@/lib/auth'
 import type { Skill } from '@/types/skill'
 import type { TargetTool } from '@/types/skill'
@@ -53,9 +54,16 @@ function mapCollection(row: PrismaCollectionRow): CollectionWithSkills {
 export async function getCollections(
   userId?: string
 ): Promise<PaginatedResponse<CollectionWithSkills>> {
-  const where = userId
-    ? { authorId: userId }
-    : { isPublic: true }
+  const session = await getCurrentUser()
+  const viewerId = session?.userId ?? null
+
+  let where: Prisma.CollectionWhereInput
+  if (userId) {
+    const isOwner = viewerId === userId
+    where = isOwner ? { authorId: userId } : { authorId: userId, isPublic: true }
+  } else {
+    where = { isPublic: true }
+  }
 
   const rows = await db.collection.findMany({
     where,

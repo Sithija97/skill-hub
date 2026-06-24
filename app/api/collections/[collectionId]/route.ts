@@ -18,6 +18,7 @@ export async function GET(
     return Response.json(collection)
   } catch (err) {
     if (err instanceof Response) return err
+    console.error('[API collections/collectionId]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -45,6 +46,7 @@ export async function PATCH(
     if (err instanceof Error && err.message.includes('Not authorized')) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
+    console.error('[API collections/collectionId]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -67,6 +69,7 @@ export async function DELETE(
     if (err instanceof Error && err.message.includes('Not authorized')) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
+    console.error('[API collections/collectionId]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

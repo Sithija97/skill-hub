@@ -14,6 +14,7 @@ export async function GET(
     return Response.json(profile)
   } catch (err) {
     if (err instanceof Response) return err
+    console.error('[API users]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -48,6 +49,7 @@ export async function PATCH(
     return Response.json(updated)
   } catch (err) {
     if (err instanceof Response) return err
+    console.error('[API users]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

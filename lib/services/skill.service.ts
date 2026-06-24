@@ -197,8 +197,12 @@ export async function getSkills(
 
   const where: Prisma.SkillWhereInput = {}
 
-  if (filters?.isPublic !== undefined) {
-    where.isPublic = filters.isPublic
+  if (filters?.isPublic === false) {
+    if (!viewerId) return { data: [], total: 0, page, pageSize, hasMore: false }
+    where.isPublic = false
+    where.authorId = viewerId
+  } else if (filters?.isPublic === true) {
+    where.isPublic = true
   } else {
     where.OR = [
       { isPublic: true },

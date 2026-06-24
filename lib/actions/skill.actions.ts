@@ -12,6 +12,7 @@ import {
   saveSkill as _saveSkill,
   unsaveSkill as _unsaveSkill,
 } from '@/lib/services/skill.service'
+import { createSkillSchema, updateSkillSchema, skillFiltersSchema } from '@/lib/validations/skill'
 import type { SkillFilters, CreateSkillInput, UpdateSkillInput } from '@/lib/services/skill.service'
 import type { SkillWithRelations } from '@/types/skill'
 import type { PaginatedResponse } from '@/types/api'
@@ -19,7 +20,8 @@ import type { PaginatedResponse } from '@/types/api'
 export async function getSkillsAction(
   filters?: SkillFilters
 ): Promise<PaginatedResponse<SkillWithRelations>> {
-  return _getSkills(filters)
+  const validated = skillFiltersSchema.parse(filters ?? {})
+  return _getSkills(validated)
 }
 
 export async function getSkillByIdAction(
@@ -31,14 +33,16 @@ export async function getSkillByIdAction(
 export async function createSkillAction(
   data: CreateSkillInput
 ): Promise<SkillWithRelations> {
-  return _createSkill(data)
+  const validated = createSkillSchema.parse(data)
+  return _createSkill(validated)
 }
 
 export async function updateSkillAction(
   id: string,
   data: UpdateSkillInput
 ): Promise<SkillWithRelations> {
-  return _updateSkill(id, data)
+  const validated = updateSkillSchema.parse(data)
+  return _updateSkill(id, validated)
 }
 
 export async function deleteSkillAction(id: string): Promise<void> {
