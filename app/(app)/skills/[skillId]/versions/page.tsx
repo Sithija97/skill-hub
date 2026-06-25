@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { IconArrowLeft } from '@tabler/icons-react'
+import { ArrowLeft } from 'lucide-react'
 import { getSkillById } from '@/lib/services/skill.service'
 import { buttonVariants } from '@/components/ui/button'
 import { Breadcrumb } from '@/components/shared/breadcrumb'
@@ -31,7 +31,7 @@ export default async function SkillVersionsPage({
           href={`/skills/${skill.id}`}
           className={buttonVariants({ variant: 'outline', size: 'icon-sm' })}
         >
-          <IconArrowLeft size={16} />
+          <ArrowLeft size={16} />
         </Link>
         <div>
           <h1 className="m-0 text-xl font-semibold text-foreground">Version history</h1>

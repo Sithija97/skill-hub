@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { getSkillById, getSkillForkOrigin } from '@/lib/services/skill.service'
+import { getSkillById } from '@/lib/services/skill.service'
+import { getCachedSkillForkOrigin } from '@/lib/cache'
 import { TARGET_TOOLS } from '@/config/tools'
 import { Breadcrumb } from '@/components/shared/breadcrumb'
 import { SkillDetailView } from '@/components/skills/skill-detail-view'
@@ -32,7 +33,7 @@ export default async function PublicSkillPage({ params }: Props) {
   const skill = await getSkillById(skillId)
   if (!skill) redirect('/')
 
-  const forkedFrom = await getSkillForkOrigin(skill.forkedFromId)
+  const forkedFrom = skill.forkedFromId ? await getCachedSkillForkOrigin(skill.forkedFromId) : null
 
   return (
     <SkillDetailView

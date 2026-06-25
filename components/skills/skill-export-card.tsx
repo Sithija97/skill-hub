@@ -1,6 +1,6 @@
 'use client'
 
-import { IconDownload } from '@tabler/icons-react'
+import { Download } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -48,7 +48,7 @@ export function SkillExportCard({ toolLabel, exportPath, exportContent, exportFi
           className="mt-2 w-full"
           onClick={() => downloadFile(exportContent, exportFilename, exportMimeType)}
         >
-          <IconDownload size={13} />
+          <Download size={13} />
           Download {exportFilename}
         </Button>
       </CardContent>

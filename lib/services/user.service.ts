@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { invalidateUserProfile, getCachedUserProfile } from '@/lib/cache'
 import type { User, UserProfile } from '@/types/user'
 
 function mapUser(row: {
@@ -32,18 +33,7 @@ export async function getUserByUsername(username: string): Promise<User | null> 
 }
 
 export async function getUserProfile(username: string): Promise<UserProfile | null> {
-  const row = await db.user.findUnique({ where: { username } })
-  if (!row) return null
-
-  const skillsCount = await db.skill.count({
-    where: { authorId: row.id, isPublic: true },
-  })
-
-  return {
-    ...mapUser(row),
-    skillsCount,
-    followersCount: 0,
-  }
+  return getCachedUserProfile(username)
 }
 
 export async function updateUser(
@@ -54,5 +44,6 @@ export async function updateUser(
     where: { id },
     data,
   })
+  invalidateUserProfile()
   return mapUser(row)
 }

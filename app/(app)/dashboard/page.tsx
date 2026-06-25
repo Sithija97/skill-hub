@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import {
-  IconFileText,
-  IconHeart,
-  IconGitFork,
-  IconUsers,
-} from '@tabler/icons-react'
+  FileText,
+  Heart,
+  GitFork,
+  Users,
+} from 'lucide-react'
 import { requireAuth } from '@/lib/auth'
 import { getSkillsByUser } from '@/lib/services/skill.service'
 import { Card, CardContent } from '@/components/ui/card'
@@ -19,10 +19,10 @@ export default async function DashboardPage() {
   const totalForks = skills.reduce((sum, s) => sum + s.forksCount, 0)
 
   const statCards = [
-    { label: 'Total skills', value: skills.length, icon: IconFileText },
-    { label: 'Total likes', value: totalLikes, icon: IconHeart },
-    { label: 'Total forks', value: totalForks, icon: IconGitFork },
-    { label: 'Followers', value: 91, icon: IconUsers },
+    { label: 'Total skills', value: skills.length, icon: FileText },
+    { label: 'Total likes', value: totalLikes, icon: Heart },
+    { label: 'Total forks', value: totalForks, icon: GitFork },
+    { label: 'Followers', value: 91, icon: Users },
   ]
 
   return (

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { SkillDiff } from '@/components/skills/skill-diff'
-import { IconEye, IconEyeOff, IconArrowBackUp } from '@tabler/icons-react'
+import { Eye, EyeOff, Undo2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface VersionsListProps {
@@ -83,12 +83,12 @@ export function VersionsList({ skillId, versions }: VersionsListProps) {
                     size="xs"
                     onClick={() => setExpandedVersion(isExpanded ? null : version.id)}
                   >
-                    {isExpanded ? <IconEyeOff size={13} /> : <IconEye size={13} />}
+                    {isExpanded ? <EyeOff size={13} /> : <Eye size={13} />}
                     {isExpanded ? 'Hide' : 'View'}
                   </Button>
                   {!isCurrent && (
                     <Button variant="outline" size="xs" onClick={() => setRestoreTarget(version)}>
-                      <IconArrowBackUp size={13} />
+                      <Undo2 size={13} />
                       Restore
                     </Button>
                   )}

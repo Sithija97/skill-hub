@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { IconSearch } from '@tabler/icons-react'
+import { Search } from 'lucide-react'
 
 export function TopbarSearch() {
   const router = useRouter()
@@ -42,7 +42,7 @@ export function TopbarSearch() {
         onClick={() => setOpen(true)}
         className="flex h-7.5 w-full cursor-pointer items-center gap-2 rounded-md border border-white/20 bg-white/8 px-3 text-sm text-white/50"
       >
-        <IconSearch size={14} className="shrink-0" />
+        <Search size={14} className="shrink-0" />
         <span className="flex-1 text-left">Type / to search</span>
         <kbd className="rounded border border-white/20 px-1.5 text-[10px] leading-4.5 text-white/40">
           /
@@ -53,7 +53,7 @@ export function TopbarSearch() {
 
   return (
     <div className="flex h-7.5 w-full items-center gap-2 rounded-md border border-ring bg-white/12 px-3">
-      <IconSearch size={14} className="shrink-0 text-white/70" />
+      <Search size={14} className="shrink-0 text-white/70" />
       <input
         ref={inputRef}
         type="text"

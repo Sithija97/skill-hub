@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
-import { IconTrash } from '@tabler/icons-react'
+import { Pencil, Trash } from 'lucide-react'
 
 interface CollectionActionsProps {
   collectionId: string
@@ -30,10 +31,19 @@ export function CollectionActions({ collectionId, collectionName }: CollectionAc
 
   return (
     <>
-      <Button variant="destructive" size="sm" onClick={() => setShowDelete(true)}>
-        <IconTrash size={15} />
-        Delete
-      </Button>
+      <div className="flex items-center gap-2">
+        <Link
+          href={`/collections/${collectionId}/edit`}
+          className={buttonVariants({ variant: 'outline', size: 'sm' })}
+        >
+          <Pencil size={15} />
+          Edit
+        </Link>
+        <Button variant="destructive" size="sm" onClick={() => setShowDelete(true)}>
+          <Trash size={15} />
+          Delete
+        </Button>
+      </div>
       <ConfirmDialog
         open={showDelete}
         title="Delete collection"

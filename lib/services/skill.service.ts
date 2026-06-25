@@ -2,6 +2,7 @@ import { db } from '@/lib/db'
 import { Prisma } from '@/lib/generated/prisma/client'
 import { getCurrentUser } from '@/lib/auth'
 import { SITE_CONFIG } from '@/config/site'
+import { invalidateSkillMutation, invalidateSaves, getCachedSkillForkOrigin, getCachedSkillVersions } from '@/lib/cache'
 import type { SkillWithRelations, SkillVersion, TargetTool } from '@/types/skill'
 import type { User } from '@/types/user'
 import type { PaginatedResponse } from '@/types/api'
@@ -170,20 +171,20 @@ function mapSkillListRow(
 // ── Tag helper: upsert tags by slug, return IDs ──
 
 async function upsertTags(slugs: string[]): Promise<string[]> {
-  const ids: string[] = []
-  for (const slug of slugs) {
-    const name = slug
-      .split('-')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ')
-    const tag = await db.tag.upsert({
-      where: { slug },
-      create: { name, slug },
-      update: {},
+  const tags = await Promise.all(
+    slugs.map((slug) => {
+      const name = slug
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+      return db.tag.upsert({
+        where: { slug },
+        create: { name, slug },
+        update: {},
+      })
     })
-    ids.push(tag.id)
-  }
-  return ids
+  )
+  return tags.map((t) => t.id)
 }
 
 // ── Service functions ──
@@ -329,6 +330,7 @@ export async function createSkill(
     return skill
   })
 
+  invalidateSkillMutation()
   return toSkillDetail(row, userId)
 }
 
@@ -339,7 +341,10 @@ export async function updateSkill(
   const session = await getCurrentUser()
   if (!session) throw new Error('Not authenticated')
 
-  const existing = await db.skill.findUnique({ where: { id } })
+  const existing = await db.skill.findUnique({
+    where: { id },
+    select: { authorId: true, version: true, content: true },
+  })
   if (!existing) throw new Error(`Skill not found: ${id}`)
   if (existing.authorId !== session.userId) throw new Error('Not authorized')
 
@@ -376,6 +381,7 @@ export async function updateSkill(
     })
   })
 
+  invalidateSkillMutation()
   return toSkillDetail(row, session.userId)
 }
 
@@ -383,11 +389,15 @@ export async function deleteSkill(id: string): Promise<void> {
   const session = await getCurrentUser()
   if (!session) throw new Error('Not authenticated')
 
-  const existing = await db.skill.findUnique({ where: { id } })
+  const existing = await db.skill.findUnique({
+    where: { id },
+    select: { authorId: true },
+  })
   if (!existing) throw new Error(`Skill not found: ${id}`)
   if (existing.authorId !== session.userId) throw new Error('Not authorized')
 
   await db.skill.delete({ where: { id } })
+  invalidateSkillMutation()
 }
 
 export async function forkSkill(
@@ -435,6 +445,7 @@ export async function forkSkill(
     return forked
   })
 
+  invalidateSkillMutation()
   return toSkillDetail(row, userId)
 }
 
@@ -448,6 +459,7 @@ export async function likeSkill(id: string, userId: string): Promise<void> {
     await tx.skillLike.create({ data: { userId, skillId: id } })
     await tx.skill.update({ where: { id }, data: { likesCount: { increment: 1 } } })
   })
+  invalidateSkillMutation()
 }
 
 export async function unlikeSkill(id: string, userId: string): Promise<void> {
@@ -460,6 +472,7 @@ export async function unlikeSkill(id: string, userId: string): Promise<void> {
     await tx.skillLike.delete({ where: { userId_skillId: { userId, skillId: id } } })
     await tx.skill.update({ where: { id }, data: { likesCount: { decrement: 1 } } })
   })
+  invalidateSkillMutation()
 }
 
 export async function saveSkill(id: string, userId: string): Promise<void> {
@@ -472,6 +485,8 @@ export async function saveSkill(id: string, userId: string): Promise<void> {
     await tx.skillSave.create({ data: { userId, skillId: id } })
     await tx.skill.update({ where: { id }, data: { savesCount: { increment: 1 } } })
   })
+  invalidateSkillMutation()
+  invalidateSaves()
 }
 
 export async function unsaveSkill(id: string, userId: string): Promise<void> {
@@ -484,6 +499,8 @@ export async function unsaveSkill(id: string, userId: string): Promise<void> {
     await tx.skillSave.delete({ where: { userId_skillId: { userId, skillId: id } } })
     await tx.skill.update({ where: { id }, data: { savesCount: { decrement: 1 } } })
   })
+  invalidateSkillMutation()
+  invalidateSaves()
 }
 
 export async function getSavedSkillsByUser(
@@ -517,20 +534,19 @@ export async function getSkillForkOrigin(
 export async function getSkillVersions(
   skillId: string
 ): Promise<SkillVersion[]> {
-  const skill = await db.skill.findUnique({ where: { id: skillId } })
+  const [skill, viewerId] = await Promise.all([
+    db.skill.findUnique({
+      where: { id: skillId },
+      select: { isPublic: true, authorId: true, versions: { orderBy: { version: 'desc' as const } } },
+    }),
+    getViewerId(),
+  ])
   if (!skill) return []
-
-  const viewerId = await getViewerId()
   if (!skill.isPublic && skill.authorId !== viewerId) return []
 
-  const rows = await db.skillVersion.findMany({
-    where: { skillId },
-    orderBy: { version: 'desc' },
-  })
-
-  return rows.map((v) => ({
+  return skill.versions.map((v) => ({
     id: v.id,
-    skillId: v.skillId,
+    skillId,
     version: v.version,
     content: v.content,
     changelog: v.changelog ?? '',

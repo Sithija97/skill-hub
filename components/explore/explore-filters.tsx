@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { TargetTool } from "@/types/skill";
 import type { Tag } from "@/types/skill";
 import { TARGET_TOOLS } from "@/config/tools";
 import type { SkillFilters } from "@/lib/services/skill.service";
 import { Button } from "@/components/ui/button";
-import { IconChevronDown, IconCheck } from "@tabler/icons-react";
+import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TOOL_FILTERS: { key: TargetTool | undefined; label: string }[] = [
@@ -32,7 +32,7 @@ interface ExploreFiltersProps {
   fetching?: boolean;
 }
 
-export function ExploreFilters({
+export const ExploreFilters = memo(function ExploreFilters({
   filters,
   onChange,
   total,
@@ -88,7 +88,7 @@ export function ExploreFilters({
             {selectedTags.length > 0
               ? `Tags (${selectedTags.length})`
               : "All tags"}
-            <IconChevronDown size={12} />
+            <ChevronDown size={12} />
           </Button>
           {tagDropdownOpen && (
             <>
@@ -119,7 +119,7 @@ export function ExploreFilters({
                             : "border-border",
                         )}
                       >
-                        {isSelected && <IconCheck size={10} />}
+                        {isSelected && <Check size={10} />}
                       </span>
                       {tag.name}
                     </button>
@@ -158,4 +158,4 @@ export function ExploreFilters({
       </div>
     </div>
   );
-}
+})

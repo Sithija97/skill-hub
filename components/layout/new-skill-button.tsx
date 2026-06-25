@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { IconPlus } from '@tabler/icons-react'
+import { Plus } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -22,7 +22,7 @@ export function NewSkillButton() {
           />
         }
       >
-        <IconPlus size={14} />
+        <Plus size={14} />
       </TooltipTrigger>
       <TooltipContent>New skill</TooltipContent>
     </Tooltip>

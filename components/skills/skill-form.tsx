@@ -6,7 +6,7 @@ import type { Control } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import dynamic from 'next/dynamic'
 import { useTheme } from 'next-themes'
-import { IconWorld, IconLock, IconX } from '@tabler/icons-react'
+import { Globe, Lock, X } from 'lucide-react'
 import type { CreateSkillInput } from '@/lib/services/skill.service'
 import { TargetTool } from '@/types/skill'
 import { TARGET_TOOLS } from '@/config/tools'
@@ -227,7 +227,7 @@ export function SkillForm({ initialData, skillId, onSubmit, isSubmitting, availa
                   onClick={() => removeTag(tag)}
                   className="ml-0.5 inline-flex cursor-pointer items-center rounded-full border-none bg-transparent p-0 opacity-60 hover:opacity-100"
                 >
-                  <IconX size={12} />
+                  <X size={12} />
                 </button>
               </Badge>
             ))}
@@ -276,7 +276,7 @@ export function SkillForm({ initialData, skillId, onSubmit, isSubmitting, availa
                     : 'border-border hover:border-border/80'
                 )}
               >
-                <IconWorld size={18} className={cn('mt-0.5 shrink-0', field.value ? 'text-foreground' : 'text-muted-foreground')} />
+                <Globe size={18} className={cn('mt-0.5 shrink-0', field.value ? 'text-foreground' : 'text-muted-foreground')} />
                 <div>
                   <div className={cn('mb-0.5 text-sm font-medium', field.value ? 'text-foreground' : 'text-muted-foreground')}>
                     Public
@@ -296,7 +296,7 @@ export function SkillForm({ initialData, skillId, onSubmit, isSubmitting, availa
                     : 'border-border hover:border-border/80'
                 )}
               >
-                <IconLock size={18} className={cn('mt-0.5 shrink-0', !field.value ? 'text-foreground' : 'text-muted-foreground')} />
+                <Lock size={18} className={cn('mt-0.5 shrink-0', !field.value ? 'text-foreground' : 'text-muted-foreground')} />
                 <div>
                   <div className={cn('mb-0.5 text-sm font-medium', !field.value ? 'text-foreground' : 'text-muted-foreground')}>
                     Private

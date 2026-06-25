@@ -29,7 +29,7 @@ SkillHub is a "GitHub for AI skills" — a web platform where developers create,
 - **Prisma 7.8** with `@prisma/adapter-neon` — Neon serverless PostgreSQL
 - **Zustand 5** for client state
 - **Zod v4** — imported as `from 'zod/v4'` (the hookform resolver supports both v3 and v4)
-- **@tabler/icons-react** for icons (not Lucide — Lucide is only used internally by shadcn components)
+- **lucide-react** for all icons (lighter than @tabler/icons-react — 43 MB vs 94 MB on disk). For filled icon states (liked heart, saved bookmark), use the `fill="currentColor"` prop on the same icon component.
 - **next-themes** for dark mode
 - **react-hook-form** + `@hookform/resolvers` for forms
 - **@uiw/react-md-editor** for the skill content editor (loaded via `dynamic()` with `ssr: false`)
@@ -117,7 +117,8 @@ skillhub/
 ├── lib/
 │   ├── db.ts                         # PrismaClient with Neon adapter (singleton pattern)
 │   ├── auth.ts                       # getCurrentUser(), requireAuth(), requireAuthApi(), getCurrentDbUser()
-│   ├── cache.ts                      # unstable_cache wrappers: sidebar counts, username, tags + invalidation helpers
+│   ├── cache.ts                      # unstable_cache wrappers: sidebar counts, username, tags, user profile,
+│   │                                 # skill fork origin, skill versions + invalidation helpers for all mutations
 │   ├── generated/prisma/             # Prisma generated client (output target)
 │   ├── services/                     # Service layer (all backed by Prisma now)
 │   │   ├── skill.service.ts          # Full CRUD + like/unlike/save/unsave/fork/versions + batch engagement checks
@@ -170,7 +171,7 @@ This is the most critical architectural decision. We follow a strict pattern:
 
 Current server/client classification:
 - **Server components (no 'use client'):** Topbar, UserButton, Sidebar items, SkillCard, SkillEditorSidebar, SkillDiff, LoadingSkeleton, Breadcrumb, EmptyState, CollectionCard, PublicPrivateBadge, all shadcn UI wrappers
-- **Client components ('use client'):** ThemeToggle, TopbarSearch, NewSkillButton, FollowButton, Sidebar (usePathname), SkillForm (react-hook-form) + ContentEditor (memo'd, useController), SkillDetailView (useCopy), SkillViewerActions, SkillOwnerActions, SkillContentActions, ExploreFilters (useState), SkillsGrid (onClick), TrendingPanel (onClick), ConfirmDialog (Dialog state), Toast (useTheme), TargetToolBadge (useTheme), SettingsForm (react-hook-form), ClientTabs, all page `-client.tsx` files
+- **Client components ('use client'):** ThemeToggle, TopbarSearch, NewSkillButton, FollowButton, Sidebar (usePathname), SkillForm (react-hook-form) + ContentEditor (memo'd, useController), SkillDetailView (useCopy), SkillViewerActions (memo'd), SkillOwnerActions, SkillContentActions, ExploreFilters (memo'd), SkillsGrid (onClick), TrendingPanel (onClick), ConfirmDialog (Dialog state), Toast (useTheme), TargetToolBadge (useTheme), SettingsForm (react-hook-form), ClientTabs, all page `-client.tsx` files
 
 ### The Service Layer Pattern
 
@@ -188,7 +189,15 @@ Components → lib/services/*.service.ts → Prisma (lib/db.ts → Neon PostgreS
   - **Sidebar counts** (saved, public, private, forked, collections) — `revalidate: 60`, tag: `sidebar`
   - **Username lookup** — `revalidate: 300`, tag: `user-profile`
   - **All tags** — `revalidate: 300`, tag: `tags`
-- API routes call `invalidateSidebar()`, `invalidateTags()`, or `invalidateUserProfile()` after mutations.
+  - **User profile** (profile data + public skill count) — `revalidate: 120`, tag: `user-profile`
+  - **Skill fork origin** (title + author username) — `revalidate: 300`, tag: `skills`
+  - **Skill versions** (version history for a skill) — `revalidate: 300`, tag: `skills`
+- Invalidation is wired into all mutation functions:
+  - `invalidateSkillMutation()` — called by createSkill, updateSkill, deleteSkill, likeSkill, unlikeSkill, saveSkill, unsaveSkill, forkSkill. Invalidates `skills`, `sidebar`, and `tags`.
+  - `invalidateCollectionMutation()` — called by createCollection, updateCollection, deleteCollection, addSkillToCollection, removeSkillFromCollection. Invalidates `collections` and `sidebar`.
+  - `invalidateSaves()` — called by saveSkill, unsaveSkill. Invalidates `saves`.
+  - `invalidateUserProfile()` — called by updateUser. Invalidates `user-profile`.
+- Viewer-specific engagement data (isLiked, isSaved) is NOT cached — it's fetched fresh per request via `batchCheckLikedSaved()` or individual lookups.
 
 ### Styling Rules
 
@@ -267,7 +276,7 @@ Adds: `skillsCount, followersCount`
 `id, name, description, isPublic, authorId, createdAt, updatedAt`
 
 ### CollectionWithSkills (extends Collection)
-Adds: `skills: Skill[]`
+Adds: `skills: Skill[], skillsCount?: number`
 
 ### Service Function Signatures (must not change)
 ```typescript
@@ -349,21 +358,29 @@ getTags(): Promise<Tag[]>
 - **Full-text search:** Search works via Prisma `contains` (case-insensitive). Could upgrade to PostgreSQL full-text search or a dedicated search service for better relevance.
 - **Collection skill management UI:** The API supports add/remove skills, but there's no UI flow to add skills to a collection from a skill detail page.
 - **Followers count:** `UserProfile.followersCount` is hardcoded to 0 — needs a followers table or count query.
-- **Error boundaries:** Add proper `error.tsx` files for each route segment (all `loading.tsx` files are in place).
+- **Error boundaries:** `error.tsx` exists for `(app)` and `(explore)` route groups plus `global-error.tsx`, but individual route segments could add more specific error handling.
 - **SEO:** Add `generateMetadata` to remaining dynamic pages (profile and public skill pages already have it).
 - **Testing:** No tests yet — add Vitest + React Testing Library.
 - **CI/CD:** No GitHub Actions or deployment config yet.
-- **Rate limiting:** No rate limiting on API routes.
+- **Rate limiting:** Only on `POST /api/skills` (10 requests/60s). Other mutation endpoints don't have rate limiting yet.
 - **Image uploads:** Avatar managed through Clerk; no custom image upload support.
 
 ---
 
 ## 9. Performance Optimizations Already Applied
 
-### Data Layer
-- `unstable_cache` with tag-based revalidation for sidebar counts, username, tags (avoids redundant DB queries)
+### Data Layer — Caching
+- `unstable_cache` with tag-based revalidation for 8 query functions: sidebar counts, username, tags, user profile, skill fork origin, skill versions (see Section 4 Caching Strategy for full list)
+- All mutation functions (create/update/delete/like/save/fork for skills; create/update/delete/add/remove for collections; update for users) call the appropriate invalidation helper to bust stale caches immediately
+- Viewer-specific engagement data (isLiked/isSaved) intentionally NOT cached — fetched fresh per request
+
+### Data Layer — Query Optimization
 - Batch engagement checks (`batchCheckLikedSaved`) to avoid N+1 queries on skill lists
-- `omit: { content: true }` on all list/grid queries (`getSkills`, `getSkillsByUser`, `getSavedSkillsByUser`) — the large `@db.Text` content column is excluded from dashboard, explore, saves, and profile pages where only SkillCard metadata is rendered. Detail pages (`getSkillById`) still fetch full content.
+- `omit: { content: true }` on all list/grid queries (`getSkills`, `getSkillsByUser`, `getSavedSkillsByUser`) AND collection skill includes — the large `@db.Text` content column is excluded everywhere except detail pages
+- Collection queries use `_count: { select: { skills: true } }` for efficient skill counting without loading skill rows
+- `upsertTags()` batched with `Promise.all()` instead of sequential for-loop (N tags = 1 round-trip instead of N)
+- `getSkillVersions()` uses a single combined query (`select` + `include`) instead of 2 sequential queries
+- Auth-check queries in `updateSkill`, `deleteSkill`, `updateCollection`, `deleteCollection`, `addSkillToCollection`, `removeSkillFromCollection` use `select: { authorId: true }` instead of loading full rows
 - Database indexes on all common query patterns (see Section 5)
 - Prisma `include` preloads used to avoid waterfall queries
 
@@ -375,6 +392,12 @@ getTags(): Promise<Tag[]>
 - **Debounced draft sync:** `watch(callback)` with 300ms debounce for Zustand editor store sync — prevents cascading parent re-renders on every keystroke
 - `useSyncExternalStore` for mounted state (avoids React Compiler issues)
 - `useMemo` for filtered/sorted lists in dashboard and explore
+- `memo()` on `SkillCard`, `ExploreFilters`, and `SkillViewerActions` to prevent unnecessary re-renders
+
+### Bundle Optimization
+- **Single icon library:** Consolidated to `lucide-react` only (43 MB vs 94 MB for @tabler/icons-react). Filled states (heart, bookmark) use `fill="currentColor"` prop instead of separate `*Filled` variants.
+- **Selective syntax highlighting:** `lib/rehype-highlight.ts` registers only 10 language grammars (javascript, typescript, python, bash, json, yaml, css, xml, sql, markdown) instead of the full `lowlight/common` bundle (~35 grammars). `highlight.js` is a transitive dependency only (via `rehype-highlight → lowlight`), not a direct dependency.
+- **`next.config.ts`:** Configured `images.remotePatterns` for Clerk avatar optimization and `serverExternalPackages: ['@prisma/client']` to reduce serverless cold start times by preventing Prisma from being bundled into server functions.
 
 ### CSS & Layout
 - Tailwind classes instead of inline styles (better CSS optimization)

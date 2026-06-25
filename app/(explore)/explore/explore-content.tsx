@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { IconSearch, IconCompass, IconX } from "@tabler/icons-react";
+import { Search, Compass, X } from "lucide-react";
 import { TargetTool } from "@/types/skill";
 import type { SkillWithRelations, Tag } from "@/types/skill";
 import { useShallow } from "zustand/react/shallow";
@@ -108,7 +108,7 @@ export function ExploreContent({
       {/* Search bar */}
       <div className="mx-auto mb-8 max-w-xl">
         <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5">
-          <IconSearch size={16} className="shrink-0 text-muted-foreground" />
+          <Search size={16} className="shrink-0 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search skills, tags, tools..."
@@ -131,7 +131,7 @@ export function ExploreContent({
               }}
               className="shrink-0 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
-              <IconX size={14} />
+              <X size={14} />
             </button>
           )}
         </div>
@@ -162,7 +162,7 @@ export function ExploreContent({
             />
           ) : (
             <EmptyState
-              icon={IconCompass}
+              icon={Compass}
               title="No skills found"
               description="Try adjusting your filters or search for something different."
             />

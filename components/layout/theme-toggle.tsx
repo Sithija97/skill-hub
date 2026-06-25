@@ -1,7 +1,7 @@
 'use client'
 
 import { useTheme } from 'next-themes'
-import { IconSun, IconMoon } from '@tabler/icons-react'
+import { Sun, Moon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { useMounted } from '@/hooks/use-mounted'
@@ -23,7 +23,7 @@ export function ThemeToggle() {
           />
         }
       >
-        {mounted && resolvedTheme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
+        {mounted && resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
       </TooltipTrigger>
       <TooltipContent>Toggle theme</TooltipContent>
     </Tooltip>
