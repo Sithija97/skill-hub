@@ -40,12 +40,11 @@ export const getCachedTags = unstable_cache(
 
 export const getCachedUserProfile = unstable_cache(
   async (username: string) => {
-    const row = await db.user.findUnique({ where: { username } })
-    if (!row) return null
-
-    const skillsCount = await db.skill.count({
-      where: { authorId: row.id, isPublic: true },
+    const row = await db.user.findUnique({
+      where: { username },
+      include: { _count: { select: { skills: { where: { isPublic: true } } } } },
     })
+    if (!row) return null
 
     return {
       id: row.id,
@@ -55,7 +54,7 @@ export const getCachedUserProfile = unstable_cache(
       avatarUrl: row.avatarUrl,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
-      skillsCount,
+      skillsCount: row._count.skills,
       followersCount: 0,
     }
   },

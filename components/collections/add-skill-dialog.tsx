@@ -31,7 +31,6 @@ export function AddSkillDialog({ collectionId, existingSkillIds, open, onOpenCha
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
   const abortRef = useRef<AbortController>(null)
-  const addedAnyRef = useRef(false)
 
   const fetchSkills = useCallback(async (search: string) => {
     abortRef.current?.abort()
@@ -58,10 +57,7 @@ export function AddSkillDialog({ collectionId, existingSkillIds, open, onOpenCha
     if (open) {
       setQuery('')
       setAddedIds(new Set())
-      addedAnyRef.current = false
       fetchSkills('')
-    } else {
-      if (addedAnyRef.current) router.refresh()
     }
     return () => {
       abortRef.current?.abort()
@@ -90,8 +86,8 @@ export function AddSkillDialog({ collectionId, existingSkillIds, open, onOpenCha
       if (res.status === 401) { router.push('/sign-in'); return }
       if (!res.ok) throw new Error()
       setAddedIds((prev) => new Set(prev).add(skillId))
-      addedAnyRef.current = true
       toast.success('Skill added to collection')
+      router.refresh()
     } catch {
       toast.error('Failed to add skill')
     } finally {

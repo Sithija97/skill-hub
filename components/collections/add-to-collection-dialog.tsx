@@ -44,12 +44,18 @@ export function AddToCollectionDialog({ skillId, open, onOpenChange }: AddToColl
 
   const handleOpenChange = useCallback((nextOpen: boolean) => {
     onOpenChange(nextOpen)
-    if (nextOpen) fetchCollections()
+    if (nextOpen) {
+      fetchCollections()
+    } else {
+      setPendingIds(new Set())
+    }
   }, [onOpenChange, fetchCollections])
 
   const handleToggle = useCallback(async (collectionId: string, hasSkill: boolean) => {
-    if (pendingIds.has(collectionId)) return
-    setPendingIds((prev) => new Set(prev).add(collectionId))
+    setPendingIds((prev) => {
+      if (prev.has(collectionId)) return prev
+      return new Set(prev).add(collectionId)
+    })
 
     setCollections((prev) =>
       prev.map((c) => (c.id === collectionId ? { ...c, hasSkill: !hasSkill } : c))
@@ -74,7 +80,7 @@ export function AddToCollectionDialog({ skillId, open, onOpenChange }: AddToColl
         return next
       })
     }
-  }, [skillId, pendingIds, router])
+  }, [skillId, router])
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
