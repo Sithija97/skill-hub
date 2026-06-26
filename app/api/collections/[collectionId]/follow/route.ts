@@ -12,6 +12,12 @@ export async function POST(
     return Response.json({ success: true })
   } catch (err) {
     if (err instanceof Response) return err
+    if (err instanceof Error && err.message.includes('not found')) {
+      return Response.json({ error: 'Collection not found' }, { status: 404 })
+    }
+    if (err instanceof Error && err.message.includes('Not authorized')) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 })
+    }
     console.error('[API collections/follow]', err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }

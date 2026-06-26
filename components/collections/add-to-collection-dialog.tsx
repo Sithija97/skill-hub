@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -27,19 +27,25 @@ export function AddToCollectionDialog({ skillId, open, onOpenChange }: AddToColl
   const [loading, setLoading] = useState(false)
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
-    if (!open) return
+  const fetchCollections = useCallback(async () => {
     setLoading(true)
-    fetch(`/api/collections/skill-status/${skillId}`)
-      .then((res) => {
-        if (res.status === 401) { router.push('/sign-in'); return null }
-        if (!res.ok) throw new Error()
-        return res.json()
-      })
-      .then((data) => { if (data) setCollections(data) })
-      .catch(() => toast.error('Failed to load collections'))
-      .finally(() => setLoading(false))
-  }, [open, skillId, router])
+    try {
+      const res = await fetch(`/api/collections/skill-status/${skillId}`)
+      if (res.status === 401) { router.push('/sign-in'); return }
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      setCollections(data)
+    } catch {
+      toast.error('Failed to load collections')
+    } finally {
+      setLoading(false)
+    }
+  }, [skillId, router])
+
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    onOpenChange(nextOpen)
+    if (nextOpen) fetchCollections()
+  }, [onOpenChange, fetchCollections])
 
   const handleToggle = useCallback(async (collectionId: string, hasSkill: boolean) => {
     if (pendingIds.has(collectionId)) return
@@ -71,7 +77,7 @@ export function AddToCollectionDialog({ skillId, open, onOpenChange }: AddToColl
   }, [skillId, pendingIds, router])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add to collection</DialogTitle>

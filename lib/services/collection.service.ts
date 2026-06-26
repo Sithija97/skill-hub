@@ -55,8 +55,10 @@ function mapCollection(row: PrismaCollectionRow): CollectionWithSkills {
 }
 
 export async function getCollections(
-  userId?: string
+  userId?: string,
+  pagination: { page?: number; pageSize?: number } = {}
 ): Promise<PaginatedResponse<CollectionWithSkills>> {
+  const { page = 1, pageSize = 20 } = pagination
   const session = await getCurrentUser()
   const viewerId = session?.userId ?? null
 
@@ -68,18 +70,23 @@ export async function getCollections(
     where = { isPublic: true }
   }
 
-  const rows = await db.collection.findMany({
-    where,
-    orderBy: { updatedAt: 'desc' },
-    include: collectionInclude,
-  })
+  const [rows, total] = await Promise.all([
+    db.collection.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+      include: collectionInclude,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    db.collection.count({ where }),
+  ])
 
   return {
     data: rows.map(mapCollection),
-    total: rows.length,
-    page: 1,
-    pageSize: rows.length,
-    hasMore: false,
+    total,
+    page,
+    pageSize,
+    hasMore: page * pageSize < total,
   }
 }
 
@@ -229,6 +236,13 @@ export async function followCollection(
   collectionId: string,
   userId: string
 ): Promise<void> {
+  const collection = await db.collection.findUnique({
+    where: { id: collectionId },
+    select: { isPublic: true, authorId: true },
+  })
+  if (!collection) throw new Error('Collection not found')
+  if (!collection.isPublic && collection.authorId !== userId) throw new Error('Not authorized')
+
   await db.collectionFollow.upsert({
     where: { userId_collectionId: { userId, collectionId } },
     create: { userId, collectionId },

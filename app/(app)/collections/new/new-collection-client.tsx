@@ -20,7 +20,6 @@ export function NewCollectionClient() {
   const {
     register,
     handleSubmit,
-    control,
     watch,
     setValue,
     formState: { errors },

@@ -5,8 +5,6 @@ import { ThemeToggle } from "./theme-toggle";
 import { NewSkillButton } from "./new-skill-button";
 import { TopbarSearch } from "./topbar-search";
 import { UserButton } from "./user-button";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export async function Topbar() {
   const session = await getCurrentUser();
