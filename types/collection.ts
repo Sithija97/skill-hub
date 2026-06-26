@@ -12,4 +12,11 @@ export interface Collection {
 
 export interface CollectionWithSkills extends Collection {
   skills: Skill[]
+  skillsCount?: number
+}
+
+export interface CollectionSkillStatus {
+  id: string
+  name: string
+  hasSkill: boolean
 }

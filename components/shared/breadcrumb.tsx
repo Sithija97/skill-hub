@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { IconChevronRight } from '@tabler/icons-react'
+import { ChevronRight } from 'lucide-react'
 
 interface BreadcrumbItem {
   label: string
@@ -18,7 +18,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
         return (
           <span key={i} className="flex items-center gap-1">
             {i > 0 && (
-              <IconChevronRight size={14} className="shrink-0 text-muted-foreground" />
+              <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
             )}
             {item.href && !isLast ? (
               <Link

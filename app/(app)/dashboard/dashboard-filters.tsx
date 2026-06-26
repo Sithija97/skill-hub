@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { IconSearch } from '@tabler/icons-react'
+import { Search } from 'lucide-react'
 import type { SkillWithRelations } from '@/types/skill'
 import { TargetTool } from '@/types/skill'
 import { TARGET_TOOLS } from '@/config/tools'
@@ -113,7 +113,7 @@ export function DashboardFilters({ skills }: DashboardFiltersProps) {
           </div>
         ) : (
           <EmptyState
-            icon={IconSearch}
+            icon={Search}
             title="No skills found"
             description="No skills match your current filters. Try adjusting your filters or create a new skill."
             action={{ label: 'New skill', href: '/skills/new' }}

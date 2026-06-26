@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import Link from 'next/link'
-import { IconHeart, IconGitFork } from '@tabler/icons-react'
+import { Heart, GitFork } from 'lucide-react'
 import type { SkillWithRelations } from '@/types/skill'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -51,11 +51,11 @@ export const SkillCard = memo(function SkillCard({ skill, showAuthor = false }: 
         {/* Footer */}
         <CardFooter className="gap-4 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
-            <IconHeart size={13} />
+            <Heart size={13} />
             {skill.likesCount}
           </span>
           <span className="inline-flex items-center gap-1">
-            <IconGitFork size={13} />
+            <GitFork size={13} />
             {skill.forksCount}
           </span>
           <PublicPrivateBadge isPublic={skill.isPublic} />

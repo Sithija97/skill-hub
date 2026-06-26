@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { IconRocket } from "@tabler/icons-react";
+import { Rocket } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { ThemeToggle } from "./theme-toggle";
 import { NewSkillButton } from "./new-skill-button";
 import { TopbarSearch } from "./topbar-search";
 import { UserButton } from "./user-button";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export async function Topbar() {
   const session = await getCurrentUser();
@@ -78,7 +76,7 @@ export async function Topbar() {
               href="/sign-up"
               className="inline-flex h-7.5 items-center gap-1.5 rounded-md  bg-[#238636] px-3 text-xs font-medium text-white no-underline shadow-sm transition-all hover:bg-[#2ea043]"
             >
-              <IconRocket size={13} />
+              <Rocket size={13} />
               Get started — it&apos;s free
             </Link>
           </>

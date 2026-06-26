@@ -1,4 +1,4 @@
-import { IconBookmark } from '@tabler/icons-react'
+import { Bookmark } from 'lucide-react'
 import { requireAuth } from '@/lib/auth'
 import { getSavedSkillsByUser } from '@/lib/services/skill.service'
 import { SkillCard } from '@/components/skills/skill-card'
@@ -23,7 +23,7 @@ export default async function SavesPage() {
         </div>
       ) : (
         <EmptyState
-          icon={IconBookmark}
+          icon={Bookmark}
           title="No saved skills yet"
           description="Skills you save will appear here"
           action={{ label: 'Explore skills', href: '/' }}

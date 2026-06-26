@@ -1,9 +1,10 @@
 import { db } from '@/lib/db'
 import { Prisma } from '@/lib/generated/prisma/client'
 import { getCurrentUser } from '@/lib/auth'
+import { invalidateCollectionMutation } from '@/lib/cache'
 import type { Skill } from '@/types/skill'
 import type { TargetTool } from '@/types/skill'
-import type { CollectionWithSkills } from '@/types/collection'
+import type { CollectionWithSkills, CollectionSkillStatus } from '@/types/collection'
 import type { PaginatedResponse } from '@/types/api'
 
 export interface CreateCollectionInput {
@@ -16,9 +17,10 @@ export type UpdateCollectionInput = Partial<CreateCollectionInput>
 
 const collectionInclude = {
   skills: {
-    include: { skill: true },
+    include: { skill: { omit: { content: true } } },
     orderBy: { addedAt: 'desc' as const },
   },
+  _count: { select: { skills: true } },
 } as const
 
 type PrismaCollectionRow = NonNullable<Awaited<ReturnType<typeof db.collection.findFirst<{ include: typeof collectionInclude }>>>>
@@ -32,11 +34,12 @@ function mapCollection(row: PrismaCollectionRow): CollectionWithSkills {
     authorId: row.authorId,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    skillsCount: row._count.skills,
     skills: row.skills.map((cs) => ({
       id: cs.skill.id,
       title: cs.skill.title,
       description: cs.skill.description,
-      content: cs.skill.content,
+      content: '',
       targetTool: cs.skill.targetTool as TargetTool,
       isPublic: cs.skill.isPublic,
       version: cs.skill.version,
@@ -52,8 +55,10 @@ function mapCollection(row: PrismaCollectionRow): CollectionWithSkills {
 }
 
 export async function getCollections(
-  userId?: string
+  userId?: string,
+  pagination: { page?: number; pageSize?: number } = {}
 ): Promise<PaginatedResponse<CollectionWithSkills>> {
+  const { page = 1, pageSize = 20 } = pagination
   const session = await getCurrentUser()
   const viewerId = session?.userId ?? null
 
@@ -65,18 +70,23 @@ export async function getCollections(
     where = { isPublic: true }
   }
 
-  const rows = await db.collection.findMany({
-    where,
-    orderBy: { updatedAt: 'desc' },
-    include: collectionInclude,
-  })
+  const [rows, total] = await Promise.all([
+    db.collection.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+      include: collectionInclude,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    db.collection.count({ where }),
+  ])
 
   return {
     data: rows.map(mapCollection),
-    total: rows.length,
-    page: 1,
-    pageSize: rows.length,
-    hasMore: false,
+    total,
+    page,
+    pageSize,
+    hasMore: page * pageSize < total,
   }
 }
 
@@ -111,6 +121,7 @@ export async function createCollection(
     include: collectionInclude,
   })
 
+  invalidateCollectionMutation()
   return mapCollection(row)
 }
 
@@ -121,7 +132,10 @@ export async function updateCollection(
   const session = await getCurrentUser()
   if (!session) throw new Error('Not authenticated')
 
-  const existing = await db.collection.findUnique({ where: { id } })
+  const existing = await db.collection.findUnique({
+    where: { id },
+    select: { authorId: true },
+  })
   if (!existing) throw new Error(`Collection not found: ${id}`)
   if (existing.authorId !== session.userId) throw new Error('Not authorized')
 
@@ -131,6 +145,7 @@ export async function updateCollection(
     include: collectionInclude,
   })
 
+  invalidateCollectionMutation()
   return mapCollection(row)
 }
 
@@ -138,11 +153,15 @@ export async function deleteCollection(id: string): Promise<void> {
   const session = await getCurrentUser()
   if (!session) throw new Error('Not authenticated')
 
-  const existing = await db.collection.findUnique({ where: { id } })
+  const existing = await db.collection.findUnique({
+    where: { id },
+    select: { authorId: true },
+  })
   if (!existing) throw new Error(`Collection not found: ${id}`)
   if (existing.authorId !== session.userId) throw new Error('Not authorized')
 
   await db.collection.delete({ where: { id } })
+  invalidateCollectionMutation()
 }
 
 export async function addSkillToCollection(
@@ -152,7 +171,10 @@ export async function addSkillToCollection(
   const session = await getCurrentUser()
   if (!session) throw new Error('Not authenticated')
 
-  const collection = await db.collection.findUnique({ where: { id: collectionId } })
+  const collection = await db.collection.findUnique({
+    where: { id: collectionId },
+    select: { authorId: true },
+  })
   if (!collection) throw new Error('Collection not found')
   if (collection.authorId !== session.userId) throw new Error('Not authorized')
 
@@ -161,6 +183,7 @@ export async function addSkillToCollection(
     create: { collectionId, skillId },
     update: {},
   })
+  invalidateCollectionMutation()
 }
 
 export async function removeSkillFromCollection(
@@ -170,19 +193,56 @@ export async function removeSkillFromCollection(
   const session = await getCurrentUser()
   if (!session) throw new Error('Not authenticated')
 
-  const collection = await db.collection.findUnique({ where: { id: collectionId } })
+  const collection = await db.collection.findUnique({
+    where: { id: collectionId },
+    select: { authorId: true },
+  })
   if (!collection) throw new Error('Collection not found')
   if (collection.authorId !== session.userId) throw new Error('Not authorized')
 
   await db.collectionSkill.deleteMany({
     where: { collectionId, skillId },
   })
+  invalidateCollectionMutation()
+}
+
+export async function getUserCollectionsForSkill(
+  skillId: string
+): Promise<CollectionSkillStatus[]> {
+  const session = await getCurrentUser()
+  if (!session) return []
+
+  const rows = await db.collection.findMany({
+    where: { authorId: session.userId },
+    select: {
+      id: true,
+      name: true,
+      skills: {
+        where: { skillId },
+        select: { skillId: true },
+      },
+    },
+    orderBy: { updatedAt: 'desc' },
+  })
+
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    hasSkill: r.skills.length > 0,
+  }))
 }
 
 export async function followCollection(
   collectionId: string,
   userId: string
 ): Promise<void> {
+  const collection = await db.collection.findUnique({
+    where: { id: collectionId },
+    select: { isPublic: true, authorId: true },
+  })
+  if (!collection) throw new Error('Collection not found')
+  if (!collection.isPublic && collection.authorId !== userId) throw new Error('Not authorized')
+
   await db.collectionFollow.upsert({
     where: { userId_collectionId: { userId, collectionId } },
     create: { userId, collectionId },

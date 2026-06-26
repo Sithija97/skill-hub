@@ -1,4 +1,4 @@
-import { getSkillVersions } from '@/lib/services/skill.service'
+import { getCachedSkillVersions } from '@/lib/cache'
 
 export async function GET(
   _req: Request,
@@ -6,7 +6,7 @@ export async function GET(
 ) {
   try {
     const { skillId } = await params
-    const versions = await getSkillVersions(skillId)
+    const versions = await getCachedSkillVersions(skillId)
     return Response.json(versions)
   } catch (err) {
     if (err instanceof Response) return err

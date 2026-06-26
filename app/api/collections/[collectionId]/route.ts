@@ -5,7 +5,6 @@ import {
   deleteCollection,
 } from '@/lib/services/collection.service'
 import { updateCollectionSchema } from '@/lib/validations/collection'
-import { invalidateSidebar } from '@/lib/cache'
 
 export async function GET(
   _req: Request,
@@ -36,7 +35,6 @@ export async function PATCH(
       return Response.json({ error: 'Validation failed', issues: parsed.error.issues }, { status: 400 })
     }
     const collection = await updateCollection(collectionId, parsed.data)
-    invalidateSidebar()
     return Response.json(collection)
   } catch (err) {
     if (err instanceof Response) return err
@@ -59,8 +57,7 @@ export async function DELETE(
     await requireAuthApi()
     const { collectionId } = await params
     await deleteCollection(collectionId)
-    invalidateSidebar()
-    return Response.json({ success: true })
+    return new Response(null, { status: 204 })
   } catch (err) {
     if (err instanceof Response) return err
     if (err instanceof Error && err.message.includes('not found')) {

@@ -4,16 +4,16 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { ComponentType } from 'react'
 import {
-  IconLayoutDashboard,
-  IconCompass,
-  IconBookmark,
-  IconFolder,
-  IconWorld,
-  IconLock,
-  IconGitFork,
-  IconUser,
-  IconSettings,
-} from '@tabler/icons-react'
+  LayoutDashboard,
+  Compass,
+  Bookmark,
+  Folder,
+  Globe,
+  Lock,
+  GitFork,
+  User,
+  Settings,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
@@ -49,25 +49,25 @@ export function Sidebar({ username, counts }: SidebarProps) {
     {
       title: 'MENU',
       items: [
-        { label: 'Dashboard', href: '/dashboard', icon: IconLayoutDashboard, matchExact: true },
-        { label: 'Explore', href: '/', icon: IconCompass },
-        { label: 'Saved', href: '/saves', icon: IconBookmark, badge: counts?.saved },
-        { label: 'Collections', href: '/collections', icon: IconFolder, badge: counts?.collections },
+        { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, matchExact: true },
+        { label: 'Explore', href: '/', icon: Compass },
+        { label: 'Saved', href: '/saves', icon: Bookmark, badge: counts?.saved },
+        { label: 'Collections', href: '/collections', icon: Folder, badge: counts?.collections },
       ],
     },
     {
       title: 'MY SKILLS',
       items: [
-        { label: 'Public', href: '/dashboard?filter=public', icon: IconWorld, badge: counts?.public },
-        { label: 'Private', href: '/dashboard?filter=private', icon: IconLock, badge: counts?.private },
-        { label: 'Forked', href: '/dashboard?filter=forked', icon: IconGitFork, badge: counts?.forked },
+        { label: 'Public', href: '/dashboard?filter=public', icon: Globe, badge: counts?.public },
+        { label: 'Private', href: '/dashboard?filter=private', icon: Lock, badge: counts?.private },
+        { label: 'Forked', href: '/dashboard?filter=forked', icon: GitFork, badge: counts?.forked },
       ],
     },
     {
       title: 'ACCOUNT',
       items: [
-        { label: 'Profile', href: username ? `/${username}` : '/settings', icon: IconUser },
-        { label: 'Settings', href: '/settings', icon: IconSettings },
+        { label: 'Profile', href: username ? `/${username}` : '/settings', icon: User },
+        { label: 'Settings', href: '/settings', icon: Settings },
       ],
     },
   ]

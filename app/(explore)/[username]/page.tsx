@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { IconSearch } from '@tabler/icons-react'
+import { Search } from 'lucide-react'
 import { getCurrentUser } from '@/lib/auth'
 import { getUserProfile } from '@/lib/services/user.service'
 import { getSkillsByUser } from '@/lib/services/skill.service'
@@ -61,7 +61,7 @@ export default async function UserProfilePage({ params }: Props) {
     </div>
   ) : (
     <EmptyState
-      icon={IconSearch}
+      icon={Search}
       title="No public skills"
       description={`${profile.displayName} hasn't published any public skills yet.`}
     />
@@ -75,7 +75,7 @@ export default async function UserProfilePage({ params }: Props) {
     </div>
   ) : (
     <EmptyState
-      icon={IconSearch}
+      icon={Search}
       title="No public collections"
       description={`${profile.displayName} hasn't created any public collections yet.`}
     />

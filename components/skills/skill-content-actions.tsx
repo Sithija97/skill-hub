@@ -1,6 +1,6 @@
 'use client'
 
-import { IconCopy, IconCheck, IconDownload } from '@tabler/icons-react'
+import { Copy, Check, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCopy } from '@/hooks/use-copy'
 
@@ -32,7 +32,7 @@ export function SkillContentActions({ content, exportContent, exportFilename, ex
         onClick={() => copy(content)}
         className={copied ? 'text-green-600' : ''}
       >
-        {copied ? <IconCheck size={13} /> : <IconCopy size={13} />}
+        {copied ? <Check size={13} /> : <Copy size={13} />}
         {copied ? 'Copied!' : 'Copy'}
       </Button>
       <Button
@@ -40,7 +40,7 @@ export function SkillContentActions({ content, exportContent, exportFilename, ex
         size="xs"
         onClick={() => downloadFile(exportContent, exportFilename, exportMimeType)}
       >
-        <IconDownload size={13} />
+        <Download size={13} />
         Export
       </Button>
     </div>

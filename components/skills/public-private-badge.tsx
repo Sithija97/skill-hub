@@ -1,4 +1,4 @@
-import { IconWorld, IconLock } from '@tabler/icons-react'
+import { Globe, Lock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 interface PublicPrivateBadgeProps {
@@ -15,7 +15,7 @@ export function PublicPrivateBadge({ isPublic }: PublicPrivateBadgeProps) {
           : 'gap-0.5 bg-muted text-muted-foreground'
       }
     >
-      {isPublic ? <IconWorld size={11} /> : <IconLock size={11} />}
+      {isPublic ? <Globe size={11} /> : <Lock size={11} />}
       {isPublic ? 'Public' : 'Private'}
     </Badge>
   )

@@ -1,7 +1,8 @@
+import { Suspense } from 'react'
 import { requireAuth } from '@/lib/auth'
-import { getCachedSidebarCounts, getCachedUsername } from '@/lib/cache'
 import { Topbar } from '@/components/layout/topbar'
-import { Sidebar } from '@/components/layout/sidebar'
+import { AsyncSidebar } from '@/components/layout/async-sidebar'
+import { SidebarSkeleton } from '@/components/layout/sidebar-skeleton'
 import { Toaster } from '@/components/shared/toast'
 
 export default async function AppLayout({
@@ -11,16 +12,13 @@ export default async function AppLayout({
 }) {
   const { userId } = await requireAuth()
 
-  const [username, counts] = await Promise.all([
-    getCachedUsername(userId),
-    getCachedSidebarCounts(userId),
-  ])
-
   return (
     <div className="flex h-screen flex-col">
       <Topbar />
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar username={username ?? undefined} counts={counts} />
+        <Suspense fallback={<SidebarSkeleton />}>
+          <AsyncSidebar userId={userId} />
+        </Suspense>
         <main className="flex-1 overflow-y-auto bg-muted/50 p-6">
           {children}
         </main>

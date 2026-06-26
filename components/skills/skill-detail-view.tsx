@@ -1,7 +1,7 @@
 import ReactMarkdown from 'react-markdown'
 import { rehypeHighlightConfigured } from '@/lib/rehype-highlight'
 import Link from 'next/link'
-import { IconGitFork } from '@tabler/icons-react'
+import { GitFork } from 'lucide-react'
 import type { SkillWithRelations } from '@/types/skill'
 import { TARGET_TOOLS } from '@/config/tools'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -65,7 +65,7 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
             {/* Fork attribution */}
             {skill.forkedFromId && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <IconGitFork size={13} />
+                <GitFork size={13} />
                 {forkedFrom ? (
                   <span>
                     Forked from{' '}

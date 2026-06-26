@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { IconHeart } from '@tabler/icons-react'
+import { Heart } from 'lucide-react'
 import type { SkillWithRelations, Tag } from '@/types/skill'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -46,7 +46,7 @@ export function TrendingPanel({
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>{skill.author.username}</span>
                   <span className="inline-flex items-center gap-0.5">
-                    <IconHeart size={11} />
+                    <Heart size={11} />
                     {skill.likesCount}
                   </span>
                 </div>

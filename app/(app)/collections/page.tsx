@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { IconFolder } from '@tabler/icons-react'
+import { Folder } from 'lucide-react'
 import { requireAuth } from '@/lib/auth'
 import { getCollections } from '@/lib/services/collection.service'
 import { CollectionCard } from '@/components/collections/collection-card'
@@ -28,7 +28,7 @@ export default async function CollectionsPage() {
         </div>
       ) : (
         <EmptyState
-          icon={IconFolder}
+          icon={Folder}
           title="No collections yet"
           description="Create a collection to organize your skills into groups."
           action={{ label: 'New collection', href: '/collections/new' }}
