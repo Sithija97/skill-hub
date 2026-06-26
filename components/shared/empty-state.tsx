@@ -1,5 +1,5 @@
+import type { ReactNode, ComponentType } from 'react'
 import Link from 'next/link'
-import type { ComponentType } from 'react'
 import { buttonVariants } from '@/components/ui/button'
 
 interface EmptyStateProps {
@@ -7,9 +7,10 @@ interface EmptyStateProps {
   title: string
   description: string
   action?: { label: string; href: string }
+  children?: ReactNode
 }
 
-export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, title, description, action, children }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
       <div className="mb-4 text-muted-foreground">
@@ -26,6 +27,7 @@ export function EmptyState({ icon: Icon, title, description, action }: EmptyStat
           {action.label}
         </Link>
       )}
+      {children && <div className="mt-6">{children}</div>}
     </div>
   )
 }
