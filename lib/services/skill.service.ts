@@ -279,7 +279,8 @@ export async function getSkillById(
 }
 
 export async function getSkillsByUser(
-  userId: string
+  userId: string,
+  limit = 500
 ): Promise<SkillWithRelations[]> {
   const viewerId = await getViewerId()
   const isOwner = viewerId === userId
@@ -290,6 +291,7 @@ export async function getSkillsByUser(
       ...(isOwner ? {} : { isPublic: true }),
     },
     orderBy: { updatedAt: 'desc' },
+    take: limit,
     include: skillListInclude,
     omit: skillListOmit,
   })
@@ -504,11 +506,13 @@ export async function unsaveSkill(id: string, userId: string): Promise<void> {
 }
 
 export async function getSavedSkillsByUser(
-  userId: string
+  userId: string,
+  limit = 500
 ): Promise<SkillWithRelations[]> {
   const rows = await db.skillSave.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
+    take: limit,
     include: {
       skill: { include: skillListInclude, omit: skillListOmit },
     },

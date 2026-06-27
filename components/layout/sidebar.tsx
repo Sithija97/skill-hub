@@ -85,7 +85,7 @@ export function Sidebar({ username, counts }: SidebarProps) {
               const active = isActive(pathname, item.href, item.matchExact)
               return (
                 <Link
-                  key={item.href}
+                  key={item.label}
                   href={item.href}
                   className={cn(
                     'mx-2 flex items-center gap-2 rounded-md px-3 py-1.5 text-sm no-underline transition-colors',

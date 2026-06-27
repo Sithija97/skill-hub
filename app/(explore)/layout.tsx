@@ -1,11 +1,13 @@
+import { ensureDbUser } from '@/lib/auth'
 import { Topbar } from '@/components/layout/topbar'
 import { Toaster } from '@/components/shared/toast'
 
-export default function ExploreLayout({
+export default async function ExploreLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  await ensureDbUser()
   return (
     <div className="flex min-h-screen flex-col">
       <Topbar />

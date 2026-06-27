@@ -6,19 +6,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { Globe, Lock } from 'lucide-react'
-import { updateCollectionSchema, type UpdateCollectionSchema } from '@/lib/validations/collection'
+import { createCollectionSchema, type CreateCollectionSchema } from '@/lib/validations/collection'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Breadcrumb } from '@/components/shared/breadcrumb'
 import { cn } from '@/lib/utils'
-import type { CollectionWithSkills } from '@/types/collection'
 
-interface EditCollectionClientProps {
-  collection: CollectionWithSkills
-}
-
-export function EditCollectionClient({ collection }: EditCollectionClientProps) {
+export function NewCollectionForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -28,46 +22,33 @@ export function EditCollectionClient({ collection }: EditCollectionClientProps) 
     watch,
     setValue,
     formState: { errors },
-  } = useForm<UpdateCollectionSchema>({
-    resolver: zodResolver(updateCollectionSchema),
-    defaultValues: {
-      name: collection.name,
-      description: collection.description,
-      isPublic: collection.isPublic,
-    },
+  } = useForm<CreateCollectionSchema>({
+    resolver: zodResolver(createCollectionSchema),
+    defaultValues: { name: '', description: '', isPublic: false },
   })
 
   const watchedIsPublic = watch('isPublic')
 
-  const onSubmit = async (data: UpdateCollectionSchema) => {
+  const onSubmit = async (data: CreateCollectionSchema) => {
     setIsSubmitting(true)
     try {
-      const res = await fetch(`/api/collections/${collection.id}`, {
-        method: 'PATCH',
+      const res = await fetch('/api/collections', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
       if (!res.ok) throw new Error()
-      toast.success('Collection updated')
+      const collection = await res.json()
+      toast.success('Collection created')
       router.push(`/collections/${collection.id}`)
     } catch {
-      toast.error('Failed to update collection')
+      toast.error('Failed to create collection')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   return (
-    <div>
-      <Breadcrumb
-        items={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: collection.name, href: `/collections/${collection.id}` },
-          { label: 'Edit' },
-        ]}
-      />
-      <h1 className="mb-6 text-xl font-semibold text-foreground">Edit collection</h1>
-
       <form onSubmit={handleSubmit(onSubmit)} className="flex max-w-2xl flex-col gap-6">
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-foreground">Name</label>
@@ -117,10 +98,9 @@ export function EditCollectionClient({ collection }: EditCollectionClientProps) 
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save changes'}
+            {isSubmitting ? 'Creating...' : 'Create collection'}
           </Button>
         </div>
       </form>
-    </div>
   )
 }

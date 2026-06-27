@@ -6,16 +6,19 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
-import { Pencil, Trash } from 'lucide-react'
+import { AddSkillDialog } from '@/components/collections/add-skill-dialog'
+import { Pencil, Plus, Trash } from 'lucide-react'
 
 interface CollectionActionsProps {
   collectionId: string
   collectionName: string
+  existingSkillIds: string[]
 }
 
-export function CollectionActions({ collectionId, collectionName }: CollectionActionsProps) {
+export function CollectionActions({ collectionId, collectionName, existingSkillIds }: CollectionActionsProps) {
   const router = useRouter()
   const [showDelete, setShowDelete] = useState(false)
+  const [showAddSkill, setShowAddSkill] = useState(false)
 
   const handleDelete = async () => {
     try {
@@ -32,6 +35,10 @@ export function CollectionActions({ collectionId, collectionName }: CollectionAc
   return (
     <>
       <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => setShowAddSkill(true)}>
+          <Plus size={15} />
+          Add Skills
+        </Button>
         <Link
           href={`/collections/${collectionId}/edit`}
           className={buttonVariants({ variant: 'outline', size: 'sm' })}
@@ -44,6 +51,12 @@ export function CollectionActions({ collectionId, collectionName }: CollectionAc
           Delete
         </Button>
       </div>
+      <AddSkillDialog
+        collectionId={collectionId}
+        existingSkillIds={existingSkillIds}
+        open={showAddSkill}
+        onOpenChange={setShowAddSkill}
+      />
       <ConfirmDialog
         open={showDelete}
         title="Delete collection"

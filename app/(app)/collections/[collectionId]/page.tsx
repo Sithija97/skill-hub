@@ -7,6 +7,7 @@ import { CollectionSkillItem } from '@/components/collections/collection-skill-i
 import { EmptyState } from '@/components/shared/empty-state'
 import { PublicPrivateBadge } from '@/components/skills/public-private-badge'
 import { CollectionActions } from './collection-actions'
+import { AddSkillButton } from './add-skill-button'
 
 export default async function CollectionDetailPage({
   params,
@@ -19,6 +20,7 @@ export default async function CollectionDetailPage({
   if (!collection) redirect('/dashboard')
 
   const isOwner = collection.authorId === userId
+  const existingSkillIds = collection.skills.map((s) => s.id)
 
   return (
     <div>
@@ -44,7 +46,13 @@ export default async function CollectionDetailPage({
           </p>
         </div>
 
-        {isOwner && <CollectionActions collectionId={collection.id} collectionName={collection.name} />}
+        {isOwner && (
+          <CollectionActions
+            collectionId={collection.id}
+            collectionName={collection.name}
+            existingSkillIds={existingSkillIds}
+          />
+        )}
       </div>
 
       {collection.skills.length > 0 ? (
@@ -62,8 +70,14 @@ export default async function CollectionDetailPage({
         <EmptyState
           icon={Search}
           title="No skills in this collection"
-          description="Add skills to this collection from skill detail pages."
-        />
+          description={isOwner
+            ? 'Start building your collection by adding skills.'
+            : 'No skills have been added to this collection yet.'}
+        >
+          {isOwner && (
+            <AddSkillButton collectionId={collection.id} existingSkillIds={existingSkillIds} />
+          )}
+        </EmptyState>
       )}
     </div>
   )

@@ -22,7 +22,7 @@ export default async function DashboardPage() {
     { label: 'Total skills', value: skills.length, icon: FileText },
     { label: 'Total likes', value: totalLikes, icon: Heart },
     { label: 'Total forks', value: totalForks, icon: GitFork },
-    { label: 'Followers', value: 91, icon: Users },
+    { label: 'Followers', value: 0, icon: Users },
   ]
 
   return (

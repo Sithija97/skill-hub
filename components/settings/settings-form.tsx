@@ -56,6 +56,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
 
       if (data.username !== initialData.username) {
         router.push('/settings')
+        return
       }
       router.refresh()
     } catch (err) {
