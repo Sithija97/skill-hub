@@ -55,7 +55,6 @@ export function ExploreContent({
       setFilters(urlFilters);
     }
 
-    return () => resetFilters();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateFilters = useCallback(

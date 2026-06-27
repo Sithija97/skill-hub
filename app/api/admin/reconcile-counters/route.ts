@@ -1,9 +1,15 @@
 import { db } from '@/lib/db'
 import { requireAuthApi } from '@/lib/auth'
 
+const ADMIN_USER_IDS = (process.env.ADMIN_USER_IDS ?? '').split(',').filter(Boolean)
+
 export async function POST() {
   try {
-    await requireAuthApi()
+    const userId = await requireAuthApi()
+
+    if (!ADMIN_USER_IDS.includes(userId)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const skills = await db.skill.findMany({ select: { id: true } })
 

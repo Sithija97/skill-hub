@@ -142,6 +142,7 @@ model CollectionSkill {
   skill        Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   @@id([collectionId, skillId])
+  @@index([skillId])
   @@map("collection_skills")
 }
 
@@ -180,5 +181,6 @@ model CollectionFollow {
   collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
   @@id([userId, collectionId])
+  @@index([collectionId])
   @@map("collection_follows")
 }

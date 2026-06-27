@@ -8,7 +8,7 @@
 
 SkillHub is a "GitHub for AI skills" — a web platform where developers create, version, fork, and share AI coding assistant prompts (called "skills") for tools like Claude, Cursor, Copilot, Windsurf, and Continue. Think of it as npm for prompt engineering.
 
-**Current state:** Full-stack application with Prisma + Neon PostgreSQL backend fully wired. The mock data layer has been removed — all services now query the real database. Clerk authentication is live with webhook-based user sync. All API routes are implemented and functional. The explore page serves as the main landing page.
+**Current state:** Full-stack application with Prisma + Neon PostgreSQL backend fully wired. The mock data layer has been removed — all services now query the real database. Clerk authentication is live with webhook-based user sync. All API routes are implemented and functional. The explore page serves as the main landing page. Collection skill management UI is complete — users can add skills from both collection detail pages and skill detail pages.
 
 ---
 
@@ -63,10 +63,17 @@ skillhub/
 │   │   │       └── loading.tsx       # Skeleton for skill detail/edit/versions
 │   │   ├── collections/
 │   │   │   ├── page.tsx              # Collections list with server-fetched data
-│   │   │   ├── new/page.tsx          # New collection form (client component)
+│   │   │   ├── new/
+│   │   │   │   ├── page.tsx          # Server page — Breadcrumb + heading
+│   │   │   │   └── new-collection-form.tsx  # Client form component
 │   │   │   ├── loading.tsx           # Skeleton for collections list
 │   │   │   └── [collectionId]/
-│   │   │       ├── page.tsx          # Collection detail with skills list, owner actions
+│   │   │       ├── page.tsx          # Server — collection detail, skills grid, empty state with AddSkillButton
+│   │   │       ├── collection-actions.tsx  # Client — Add Skills + Edit + Delete buttons
+│   │   │       ├── add-skill-button.tsx    # Client — trigger for AddSkillDialog (used in empty state)
+│   │   │       ├── edit/
+│   │   │       │   ├── page.tsx      # Server page — Breadcrumb + heading
+│   │   │       │   └── edit-collection-form.tsx  # Client form component
 │   │   │       └── loading.tsx       # Skeleton for collection detail
 │   │   ├── saves/
 │   │   │   ├── page.tsx              # Server-fetched saved skills grid
@@ -99,8 +106,10 @@ skillhub/
 │       ├── users/[username]/route.ts # GET (profile), PATCH (update with username uniqueness check)
 │       └── collections/
 │           ├── route.ts              # GET (list), POST (create)
+│           ├── skill-status/[skillId]/route.ts  # GET (user's collections with membership status for a skill)
 │           └── [collectionId]/
 │               ├── route.ts          # GET, PATCH, DELETE
+│               ├── skills/[skillId]/route.ts    # POST (add skill), DELETE (remove skill)
 │               └── follow/route.ts   # POST/DELETE
 ├── components/
 │   ├── ui/                           # shadcn primitives (Button, Card, Badge, Input, Dialog, Tabs, Select, etc.)
@@ -109,11 +118,13 @@ skillhub/
 │   │                                 # SkillViewerActions, SkillOwnerActions, SkillContentActions,
 │   │                                 # SkillExportCard, SkillDiff, SkillEditorSidebar, TargetToolBadge,
 │   │                                 # PublicPrivateBadge
-│   ├── collections/                  # CollectionCard, FollowButton
+│   ├── collections/                  # CollectionCard, FollowButton, AddSkillDialog,
+│   │                                 # AddToCollectionDialog, CollectionSkillItem (server),
+│   │                                 # SkillRemoveButton (client)
 │   ├── explore/                      # ExploreFilters, SkillsGrid, TrendingPanel
 │   ├── settings/                     # SettingsForm (profile edit with react-hook-form + Zod validation)
-│   └── shared/                       # Breadcrumb, ConfirmDialog, EmptyState, LoadingSkeleton, Toast,
-│                                     # ThemeProvider, ClientTabs
+│   └── shared/                       # Breadcrumb, ConfirmDialog, EmptyState (supports children for
+│                                     # custom actions), LoadingSkeleton, Toast, ThemeProvider, ClientTabs
 ├── lib/
 │   ├── db.ts                         # PrismaClient with Neon adapter (singleton pattern)
 │   ├── auth.ts                       # getCurrentUser(), requireAuth(), requireAuthApi(), getCurrentDbUser()
@@ -165,13 +176,15 @@ skillhub/
 This is the most critical architectural decision. We follow a strict pattern:
 
 1. **Pages are server components** that fetch data using `await` — no `useEffect` + `useState` for data loading.
-2. **Interactive UI lives in thin `-client.tsx` files** that receive pre-fetched data as props.
+2. **Interactive UI lives in focused client children** that receive pre-fetched data as props.
 3. **Components are server by default.** Only add `'use client'` when the component itself uses hooks or event handlers.
 4. **Client components CAN be children of server components** — Next.js handles the boundary. Don't mark a parent as client just because it renders a client child.
+5. **Push `'use client'` as deep as possible.** Form pages: server page renders Breadcrumb + heading, client component is just the form (e.g., `new-collection-form.tsx`, `edit-collection-form.tsx`). List items with one interactive element: server component for the card, tiny client component for the button (e.g., `CollectionSkillItem` is server, `SkillRemoveButton` is client).
+6. **Name client form components `*-form.tsx`** (not `*-client.tsx`) to clarify their role.
 
 Current server/client classification:
-- **Server components (no 'use client'):** Topbar, UserButton, Sidebar items, SkillCard, SkillEditorSidebar, SkillDiff, LoadingSkeleton, Breadcrumb, EmptyState, CollectionCard, PublicPrivateBadge, all shadcn UI wrappers
-- **Client components ('use client'):** ThemeToggle, TopbarSearch, NewSkillButton, FollowButton, Sidebar (usePathname), SkillForm (react-hook-form) + ContentEditor (memo'd, useController), SkillDetailView (useCopy), SkillViewerActions (memo'd), SkillOwnerActions, SkillContentActions, ExploreFilters (memo'd), SkillsGrid (onClick), TrendingPanel (onClick), ConfirmDialog (Dialog state), Toast (useTheme), TargetToolBadge (useTheme), SettingsForm (react-hook-form), ClientTabs, all page `-client.tsx` files
+- **Server components (no 'use client'):** Topbar, UserButton, Sidebar items, SkillCard, SkillEditorSidebar, SkillDiff, LoadingSkeleton, Breadcrumb, EmptyState, CollectionCard, CollectionSkillItem, PublicPrivateBadge, all shadcn UI wrappers
+- **Client components ('use client'):** ThemeToggle, TopbarSearch, NewSkillButton, FollowButton, Sidebar (usePathname), SkillForm (react-hook-form) + ContentEditor (memo'd, useController), SkillDetailView (useCopy), SkillViewerActions (memo'd), SkillOwnerActions, SkillContentActions, SkillRemoveButton, AddSkillDialog, AddSkillButton, AddToCollectionDialog, ExploreFilters (memo'd), SkillsGrid (onClick), TrendingPanel (onClick), ConfirmDialog (Dialog state), Toast (useTheme), TargetToolBadge (useTheme), SettingsForm (react-hook-form), NewCollectionForm, EditCollectionForm, ClientTabs, all page-level client wrappers
 
 ### The Service Layer Pattern
 
@@ -345,7 +358,8 @@ getTags(): Promise<Tag[]>
 - **Version history:** Timeline, diff view — versions stored as full snapshots
 - **Explore / Landing page:** The explore page IS the landing page (`/`). Hero + search, tool/tag/sort filters, URL-synced state, trending panel, load more pagination
 - **Public user profiles:** Avatar, bio, stats, skills tab — server-fetched
-- **Collections:** Full CRUD (list, create, detail with skills, edit, delete), follow/unfollow, add/remove skills
+- **Collections:** Full CRUD (list, create, detail with skills, edit, delete), follow/unfollow, add/remove skills via API and UI
+- **Collection skill management UI:** AddSkillDialog (search + add skills from collection detail page with AbortController, debounced search, optimistic "Added" state), AddToCollectionDialog (toggle skills across collections from skill detail page), AddSkillButton in empty collection state, "Add Skills" button in collection header actions
 - **Saves page:** Server-fetched saved skills grid with empty state
 - **Settings page:** Profile edit form (display name, username with uniqueness check, bio) via API
 - **Export service:** Format skills for Claude/Cursor/Copilot/Windsurf/Continue (file download)
@@ -356,7 +370,6 @@ getTags(): Promise<Tag[]>
 ### REMAINING (next development phases):
 - **Marketing landing page:** The `/` route currently shows explore content. A dedicated marketing/hero page for unauthenticated users could be added.
 - **Full-text search:** Search works via Prisma `contains` (case-insensitive). Could upgrade to PostgreSQL full-text search or a dedicated search service for better relevance.
-- **Collection skill management UI:** The API supports add/remove skills, but there's no UI flow to add skills to a collection from a skill detail page.
 - **Followers count:** `UserProfile.followersCount` is hardcoded to 0 — needs a followers table or count query.
 - **Error boundaries:** `error.tsx` exists for `(app)` and `(explore)` route groups plus `global-error.tsx`, but individual route segments could add more specific error handling.
 - **SEO:** Add `generateMetadata` to remaining dynamic pages (profile and public skill pages already have it).
@@ -378,6 +391,7 @@ getTags(): Promise<Tag[]>
 - Batch engagement checks (`batchCheckLikedSaved`) to avoid N+1 queries on skill lists
 - `omit: { content: true }` on all list/grid queries (`getSkills`, `getSkillsByUser`, `getSavedSkillsByUser`) AND collection skill includes — the large `@db.Text` content column is excluded everywhere except detail pages
 - Collection queries use `_count: { select: { skills: true } }` for efficient skill counting without loading skill rows
+- `getCachedUserProfile` uses single Prisma query with `include: { _count: { select: { skills: { where: { isPublic: true } } } } }` — 1 DB round-trip instead of 2 sequential queries
 - `upsertTags()` batched with `Promise.all()` instead of sequential for-loop (N tags = 1 round-trip instead of N)
 - `getSkillVersions()` uses a single combined query (`select` + `include`) instead of 2 sequential queries
 - Auth-check queries in `updateSkill`, `deleteSkill`, `updateCollection`, `deleteCollection`, `addSkillToCollection`, `removeSkillFromCollection` use `select: { authorId: true }` instead of loading full rows
@@ -394,6 +408,16 @@ getTags(): Promise<Tag[]>
 - `useMemo` for filtered/sorted lists in dashboard and explore
 - `memo()` on `SkillCard`, `ExploreFilters`, and `SkillViewerActions` to prevent unnecessary re-renders
 
+### Client-Side Fetch Patterns
+- **Optimistic updates** for toggles (like, save, follow, add-to-collection) — update UI first, revert on error
+- **`router.refresh()` fires immediately** on successful mutation — never deferred to dialog close or unmount
+- **AbortController** on search/fetch-on-open patterns (e.g., `AddSkillDialog`) — cancels stale in-flight requests before starting new ones
+- **Debounced search** inputs (300ms) with cleanup on unmount via `useEffect` return
+- **Dialog initial fetch** uses `useEffect` on `open` prop (not `onOpenChange` callback) — ensures data loads reliably regardless of how the dialog opens
+- **State cleanup on dialog close** — `pendingIds` and transient state cleared when dialog closes to prevent stale UI on reopen
+- **No redundant navigation** — `router.push()` is followed by `return` to skip unnecessary `router.refresh()` (e.g., `settings-form.tsx` on username change)
+- **`setPendingIds` functional updater** for guard checks — avoids adding `pendingIds` to `useCallback` dependency arrays, preventing unnecessary callback recreations
+
 ### Bundle Optimization
 - **Single icon library:** Consolidated to `lucide-react` only (43 MB vs 94 MB for @tabler/icons-react). Filled states (heart, bookmark) use `fill="currentColor"` prop instead of separate `*Filled` variants.
 - **Selective syntax highlighting:** `lib/rehype-highlight.ts` registers only 10 language grammars (javascript, typescript, python, bash, json, yaml, css, xml, sql, markdown) instead of the full `lowlight/common` bundle (~35 grammars). `highlight.js` is a transitive dependency only (via `rehype-highlight → lowlight`), not a direct dependency.
@@ -409,7 +433,9 @@ getTags(): Promise<Tag[]>
 ## 10. File Naming Conventions
 
 - `page.tsx` — Next.js page (server component by default)
-- `*-client.tsx` — Client component companion to a server page
+- `*-form.tsx` — Client form component (e.g., `new-collection-form.tsx`, `edit-collection-form.tsx`)
+- `*-client.tsx` — Client component companion to a server page (legacy; prefer `*-form.tsx` for forms)
+- `*-button.tsx` / `*-dialog.tsx` — Focused client components for a single interactive element
 - `*.service.ts` — Service layer (the import boundary between UI and data)
 - `*.tsx` in `components/` — Reusable UI components
 - `use-*.ts` in `hooks/` — Custom React hooks

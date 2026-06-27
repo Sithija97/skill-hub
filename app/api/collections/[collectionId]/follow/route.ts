@@ -1,5 +1,6 @@
 import { requireAuthApi } from '@/lib/auth'
 import { followCollection, unfollowCollection } from '@/lib/services/collection.service'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(
   _req: Request,
@@ -7,6 +8,7 @@ export async function POST(
 ) {
   try {
     const userId = await requireAuthApi()
+    if (!rateLimit(`follow:${userId}`, 30, 60_000)) return rateLimitResponse()
     const { collectionId } = await params
     await followCollection(collectionId, userId)
     return Response.json({ success: true })
@@ -29,6 +31,7 @@ export async function DELETE(
 ) {
   try {
     const userId = await requireAuthApi()
+    if (!rateLimit(`follow:${userId}`, 30, 60_000)) return rateLimitResponse()
     const { collectionId } = await params
     await unfollowCollection(collectionId, userId)
     return Response.json({ success: true })

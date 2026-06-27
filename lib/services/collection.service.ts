@@ -15,10 +15,13 @@ export interface CreateCollectionInput {
 
 export type UpdateCollectionInput = Partial<CreateCollectionInput>
 
+const MAX_COLLECTION_SKILLS = 200
+
 const collectionInclude = {
   skills: {
     include: { skill: { omit: { content: true } } },
     orderBy: { addedAt: 'desc' as const },
+    take: MAX_COLLECTION_SKILLS,
   },
   _count: { select: { skills: true } },
 } as const

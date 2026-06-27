@@ -1,11 +1,11 @@
 import 'dotenv/config'
 import { PrismaClient } from '../lib/generated/prisma/client'
 import { TargetTool } from '../lib/generated/prisma/enums'
-import { PrismaNeon } from '@prisma/adapter-neon'
+import { PrismaPg } from '@prisma/adapter-pg'
+import pg from 'pg'
 
-const prisma = new PrismaClient({
-  adapter: new PrismaNeon({ connectionString: process.env.DATABASE_URL! }),
-})
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool) })
 
 async function main() {
   console.log('Seeding database...')
