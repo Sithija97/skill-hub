@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { requireAuth } from '@/lib/auth'
+import { requireAuth, ensureDbUser } from '@/lib/auth'
 import { Topbar } from '@/components/layout/topbar'
 import { AsyncSidebar } from '@/components/layout/async-sidebar'
 import { SidebarSkeleton } from '@/components/layout/sidebar-skeleton'
@@ -11,6 +11,7 @@ export default async function AppLayout({
   children: React.ReactNode
 }) {
   const { userId } = await requireAuth()
+  await ensureDbUser()
 
   return (
     <div className="flex h-screen flex-col">
