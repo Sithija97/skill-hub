@@ -14,7 +14,7 @@ export default function DashboardLoading() {
       </div>
 
       {/* Stat cards */}
-      <div className="mb-6 grid grid-cols-4 gap-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
           <div key={i} className="rounded-lg border border-border p-4">
             <div className="flex items-center gap-3">

@@ -37,7 +37,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats — server-rendered */}
-      <div className="mb-6 grid grid-cols-4 gap-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {statCards.map((stat) => (
           <Card key={stat.label} size="sm">
             <CardContent className="flex items-center gap-3">

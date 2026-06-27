@@ -11,7 +11,7 @@ export default async function ExploreLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <Topbar />
-      <main className="mx-auto w-full max-w-7xl flex-1 p-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">
         {children}
       </main>
       <Toaster />

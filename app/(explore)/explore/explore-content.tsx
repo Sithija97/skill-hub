@@ -137,7 +137,7 @@ export function ExploreContent({
       </div>
 
       {/* Main content */}
-      <div className="grid grid-cols-[1fr_280px] items-start gap-6">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_280px]">
         <div>
           <div className="mb-5">
             <ExploreFilters
@@ -168,7 +168,7 @@ export function ExploreContent({
           )}
         </div>
 
-        <div className="sticky top-19">
+        <div className="sticky top-19 hidden lg:block">
           <TrendingPanel
             trendingSkills={trendingSkills}
             popularTags={popularTags}

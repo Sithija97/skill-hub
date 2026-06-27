@@ -170,7 +170,7 @@ export function SkillForm({ initialData, skillId, onSubmit, isSubmitting, availa
           name="targetTool"
           control={control}
           render={({ field }) => (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {Object.entries(TARGET_TOOLS).map(([key, config]) => {
                 const isSelected = field.value === key
                 return (

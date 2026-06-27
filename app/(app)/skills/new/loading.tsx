@@ -6,7 +6,7 @@ export default function NewSkillLoading() {
       <Skeleton className="mb-4 h-4 w-48" />
       <Skeleton className="mb-6 h-6 w-24" />
 
-      <div className="grid grid-cols-[1fr_340px] items-start gap-6">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_340px]">
         <div className="flex flex-col gap-6">
           <div>
             <Skeleton className="mb-1.5 h-4 w-12" />
@@ -18,7 +18,7 @@ export default function NewSkillLoading() {
           </div>
           <div>
             <Skeleton className="mb-1.5 h-4 w-24" />
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {Array.from({ length: 6 }, (_, i) => (
                 <Skeleton key={i} className="h-12 rounded-md" />
               ))}
