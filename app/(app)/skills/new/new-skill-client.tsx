@@ -65,7 +65,7 @@ export function NewSkillClient({ availableTags }: NewSkillClientProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-[1fr_340px] items-start gap-6">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_340px]">
         <SkillForm
           initialData={showDraftBanner ? draft : undefined}
           onSubmit={handleSubmit}

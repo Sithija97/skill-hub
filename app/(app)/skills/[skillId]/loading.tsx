@@ -5,7 +5,7 @@ export default function SkillDetailLoading() {
     <div>
       <Skeleton className="mb-4 h-4 w-48" />
 
-      <div className="grid grid-cols-[1fr_320px] items-start gap-6">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-5">
           <div>
             <div className="mb-2 flex items-center gap-3">

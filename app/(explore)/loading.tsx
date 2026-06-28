@@ -12,7 +12,7 @@ export default function ExploreGroupLoading() {
         </div>
       </div>
 
-      <div className="grid grid-cols-[1fr_280px] items-start gap-6">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_280px]">
         <div>
           <div className="mb-5 flex items-center justify-between">
             <div className="flex gap-1">
@@ -25,7 +25,7 @@ export default function ExploreGroupLoading() {
           <SkillGridSkeleton count={6} />
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="hidden flex-col gap-4 lg:flex">
           <Skeleton className="h-48 w-full rounded-lg" />
           <Skeleton className="h-32 w-full rounded-lg" />
         </div>

@@ -6,12 +6,19 @@ import { NewSkillButton } from "./new-skill-button";
 import { TopbarSearch } from "./topbar-search";
 import { UserButton } from "./user-button";
 
-export async function Topbar() {
+interface TopbarProps {
+  mobileSidebar?: React.ReactNode;
+}
+
+export async function Topbar({ mobileSidebar }: TopbarProps) {
   const session = await getCurrentUser();
   const isSignedIn = !!session;
 
   return (
-    <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-4 bg-(--color-bg-header) px-4">
+    <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-2 bg-(--color-bg-header) px-4 sm:gap-4">
+      {/* Mobile sidebar trigger */}
+      {mobileSidebar}
+
       {/* Logo */}
       <Link
         href={isSignedIn ? "/dashboard" : "/"}
@@ -51,7 +58,7 @@ export async function Topbar() {
       </nav>
 
       {/* Search */}
-      <div className="max-w-135 flex-1">
+      <div className="hidden max-w-135 flex-1 sm:block">
         <TopbarSearch />
       </div>
 
@@ -74,10 +81,11 @@ export async function Topbar() {
             </Link>
             <Link
               href="/sign-up"
-              className="inline-flex h-7.5 items-center gap-1.5 rounded-md  bg-[#238636] px-3 text-xs font-medium text-white no-underline shadow-sm transition-all hover:bg-[#2ea043]"
+              className="inline-flex h-7.5 items-center gap-1.5 rounded-md bg-[#238636] px-3 text-xs font-medium text-white no-underline shadow-sm transition-all hover:bg-[#2ea043]"
             >
               <Rocket size={13} />
-              Get started — it&apos;s free
+              <span className="hidden sm:inline">Get started — it&apos;s free</span>
+              <span className="sm:hidden">Sign up</span>
             </Link>
           </>
         )}

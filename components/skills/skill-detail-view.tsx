@@ -34,7 +34,7 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
     <div>
       {breadcrumb}
 
-      <div className="grid grid-cols-[1fr_320px] items-start gap-6">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_320px]">
         {/* Left column */}
         <div className="flex min-w-0 flex-col gap-5">
           {/* Header */}

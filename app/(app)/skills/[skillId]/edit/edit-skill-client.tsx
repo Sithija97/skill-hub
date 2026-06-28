@@ -76,7 +76,7 @@ export function EditSkillClient({ skill, availableTags = [] }: { skill: SkillWit
 
       <h1 className="mb-6 text-xl font-semibold text-foreground">Edit skill</h1>
 
-      <div className="grid grid-cols-[1fr_340px] items-start gap-6">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_340px]">
         <div>
           <SkillForm
             initialData={initialData}
