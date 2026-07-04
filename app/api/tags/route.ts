@@ -1,8 +1,8 @@
-import { getTags } from '@/lib/services/tag.service'
+import { getCachedTags } from '@/lib/cache'
 
 export async function GET() {
   try {
-    const tags = await getTags()
+    const tags = await getCachedTags()
     return Response.json(tags)
   } catch (err) {
     if (err instanceof Response) return err

@@ -1,5 +1,6 @@
 import { unstable_cache, revalidateTag } from 'next/cache'
 import { db } from './db'
+import { getTags } from './services/tag.service'
 
 // ── Existing cached functions ──
 
@@ -28,10 +29,7 @@ export const getCachedUsername = unstable_cache(
 )
 
 export const getCachedTags = unstable_cache(
-  async () => {
-    const rows = await db.tag.findMany({ orderBy: { name: 'asc' } })
-    return rows.map((t) => ({ id: t.id, name: t.name, slug: t.slug }))
-  },
+  getTags,
   ['all-tags'],
   { revalidate: 300, tags: ['tags'] }
 )
