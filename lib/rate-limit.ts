@@ -1,3 +1,6 @@
+// In-process store: correct only on a single instance. If this app ever moves to
+// multi-instance/serverless hosting, each instance gets its own counter and limits
+// stop being globally enforced — swap for a shared store (Redis/Postgres) at that point.
 const store = new Map<string, { count: number; resetAt: number }>()
 
 setInterval(() => {

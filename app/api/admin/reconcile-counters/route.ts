@@ -13,22 +13,30 @@ export async function POST() {
 
     const skills = await db.skill.findMany({ select: { id: true } })
 
-    let updated = 0
-    for (const skill of skills) {
-      const [likesCount, savesCount, forksCount] = await Promise.all([
-        db.skillLike.count({ where: { skillId: skill.id } }),
-        db.skillSave.count({ where: { skillId: skill.id } }),
-        db.skill.count({ where: { forkedFromId: skill.id } }),
-      ])
+    const [likeCounts, saveCounts, forkCounts] = await Promise.all([
+      db.skillLike.groupBy({ by: ['skillId'], _count: { skillId: true } }),
+      db.skillSave.groupBy({ by: ['skillId'], _count: { skillId: true } }),
+      db.skill.groupBy({ by: ['forkedFromId'], where: { forkedFromId: { not: null } }, _count: { forkedFromId: true } }),
+    ])
 
-      await db.skill.update({
-        where: { id: skill.id },
-        data: { likesCount, savesCount, forksCount },
-      })
-      updated++
-    }
+    const likeMap = new Map(likeCounts.map((r) => [r.skillId, r._count.skillId]))
+    const saveMap = new Map(saveCounts.map((r) => [r.skillId, r._count.skillId]))
+    const forkMap = new Map(forkCounts.map((r) => [r.forkedFromId as string, r._count.forkedFromId]))
 
-    return Response.json({ success: true, updated })
+    await db.$transaction(
+      skills.map((skill) =>
+        db.skill.update({
+          where: { id: skill.id },
+          data: {
+            likesCount: likeMap.get(skill.id) ?? 0,
+            savesCount: saveMap.get(skill.id) ?? 0,
+            forksCount: forkMap.get(skill.id) ?? 0,
+          },
+        })
+      )
+    )
+
+    return Response.json({ success: true, updated: skills.length })
   } catch (err) {
     if (err instanceof Response) return err
     console.error('[API admin/reconcile-counters]', err)
