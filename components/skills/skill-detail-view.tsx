@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { rehypeHighlightConfigured } from '@/lib/rehype-highlight'
 import Link from 'next/link'
 import { GitFork } from 'lucide-react'
@@ -113,7 +114,7 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
             </CardHeader>
             <CardContent className="p-5">
               <div className="prose">
-                <ReactMarkdown rehypePlugins={[rehypeHighlightConfigured]}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlightConfigured]}>
                   {skill.content}
                 </ReactMarkdown>
               </div>
