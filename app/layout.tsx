@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { ThemeProvider } from '@/components/shared/theme-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -28,6 +29,7 @@ export default function RootLayout({
               {children}
             </TooltipProvider>
           </ThemeProvider>
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
