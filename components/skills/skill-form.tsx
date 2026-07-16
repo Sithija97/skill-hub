@@ -14,6 +14,8 @@ import { createSkillSchema } from '@/lib/validations/skill'
 import type { Tag } from '@/types/skill'
 import { useShallow } from 'zustand/react/shallow'
 import { useEditorStore } from '@/store/editor-store'
+import { markdownComponents } from '@/components/shared/markdown-components'
+import { rehypeMermaid } from '@/lib/rehype-mermaid'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -39,6 +41,15 @@ const MDEditor = dynamic(() => import('@uiw/react-md-editor'), {
   ),
 })
 
+// Hoisted to module scope: a fresh object identity on every keystroke would
+// defeat MDEditor's internal memoization of the preview subtree.
+const previewOptions = {
+  components: markdownComponents,
+  // Runs before @uiw's built-in rehype-prism-plus, so mermaid fences are
+  // extracted to plain text before that highlighter tokenizes them.
+  rehypePlugins: [rehypeMermaid],
+}
+
 const ContentEditor = memo(function ContentEditor({
   control,
   theme,
@@ -55,6 +66,7 @@ const ContentEditor = memo(function ContentEditor({
         onChange={(val) => field.onChange(val ?? '')}
         height={400}
         preview="live"
+        previewOptions={previewOptions}
       />
     </div>
   )

@@ -1,6 +1,8 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { rehypeHighlightConfigured } from '@/lib/rehype-highlight'
+import { rehypeMermaid } from '@/lib/rehype-mermaid'
+import { markdownComponents } from '@/components/shared/markdown-components'
 import Link from 'next/link'
 import { GitFork } from 'lucide-react'
 import type { SkillWithRelations } from '@/types/skill'
@@ -13,6 +15,11 @@ import { PublicPrivateBadge } from './public-private-badge'
 import { SkillContentActions } from './skill-content-actions'
 import { SkillExportCard } from './skill-export-card'
 import { formatSkillForExport } from '@/lib/services/export.service'
+
+const remarkPlugins = [remarkGfm]
+// rehypeMermaid must run before the highlighter so it sees the pristine
+// code text, not tokens the highlighter has already split it into.
+const rehypePlugins = [rehypeMermaid, rehypeHighlightConfigured]
 
 interface SkillDetailViewProps {
   skill: SkillWithRelations
@@ -114,7 +121,11 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
             </CardHeader>
             <CardContent className="p-5">
               <div className="prose">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlightConfigured]}>
+                <ReactMarkdown
+                  remarkPlugins={remarkPlugins}
+                  rehypePlugins={rehypePlugins}
+                  components={markdownComponents}
+                >
                   {skill.content}
                 </ReactMarkdown>
               </div>
