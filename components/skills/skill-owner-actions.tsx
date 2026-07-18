@@ -1,58 +1,83 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { toast } from 'sonner'
-import { deleteSkillAction } from '@/lib/actions/skill.actions'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button, buttonVariants } from '@/components/ui/button'
-import { ConfirmDialog } from '@/components/shared/confirm-dialog'
-import { Pencil, History, Trash, FolderPlus } from 'lucide-react'
-import { AddToCollectionDialog } from '@/components/collections/add-to-collection-dialog'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { toast } from "sonner";
+import { deleteSkillAction } from "@/lib/actions/skill.actions";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { Pencil, History, Trash, FolderPlus } from "lucide-react";
+import { AddToCollectionDialog } from "@/components/collections/add-to-collection-dialog";
+import { ShareButton } from "@/components/skills/share-button";
+import { buildSkillShareUrl } from "@/lib/share";
 
 interface SkillOwnerActionsProps {
-  skillId: string
-  skillTitle: string
+  skillId: string;
+  skillTitle: string;
+  isPublic: boolean;
+  authorUsername: string;
 }
 
-export function SkillOwnerActions({ skillId, skillTitle }: SkillOwnerActionsProps) {
-  const router = useRouter()
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [showCollectionDialog, setShowCollectionDialog] = useState(false)
+export function SkillOwnerActions({
+  skillId,
+  skillTitle,
+  isPublic,
+  authorUsername,
+}: SkillOwnerActionsProps) {
+  const router = useRouter();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
 
   const handleDelete = async () => {
     try {
-      await deleteSkillAction(skillId)
-      toast.success('Skill deleted')
-      router.push('/dashboard')
+      await deleteSkillAction(skillId);
+      toast.success("Skill deleted");
+      router.push("/dashboard");
     } catch {
-      toast.error('Failed to delete skill')
+      toast.error("Failed to delete skill");
     }
-    setShowDeleteDialog(false)
-  }
+    setShowDeleteDialog(false);
+  };
 
   return (
     <>
       <Card size="sm">
         <CardHeader>
-          <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground">ACTIONS</CardTitle>
+          <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground">
+            ACTIONS
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <Link
             href={`/skills/${skillId}/edit`}
-            className={buttonVariants({ variant: 'outline', size: 'sm', className: 'justify-start gap-2' })}
+            className={buttonVariants({
+              variant: "outline",
+              size: "sm",
+              className: "justify-start gap-2",
+            })}
           >
             <Pencil size={15} />
             Edit skill
           </Link>
           <Link
             href={`/skills/${skillId}/versions`}
-            className={buttonVariants({ variant: 'outline', size: 'sm', className: 'justify-start gap-2' })}
+            className={buttonVariants({
+              variant: "outline",
+              size: "sm",
+              className: "justify-start gap-2",
+            })}
           >
             <History size={15} />
             View versions
           </Link>
+          {isPublic && (
+            <ShareButton
+              url={buildSkillShareUrl(authorUsername, skillId)}
+              title={skillTitle}
+            />
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -89,5 +114,5 @@ export function SkillOwnerActions({ skillId, skillTitle }: SkillOwnerActionsProp
         onOpenChange={setShowCollectionDialog}
       />
     </>
-  )
+  );
 }

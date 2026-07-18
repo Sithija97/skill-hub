@@ -1,42 +1,47 @@
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import { rehypeHighlightConfigured } from '@/lib/rehype-highlight'
-import { rehypeMermaid } from '@/lib/rehype-mermaid'
-import { markdownComponents } from '@/components/shared/markdown-components'
-import Link from 'next/link'
-import { GitFork } from 'lucide-react'
-import type { SkillWithRelations } from '@/types/skill'
-import { TARGET_TOOLS } from '@/config/tools'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { TargetToolBadge } from './target-tool-badge'
-import { PublicPrivateBadge } from './public-private-badge'
-import { SkillContentActions } from './skill-content-actions'
-import { SkillExportCard } from './skill-export-card'
-import { formatSkillForExport } from '@/lib/services/export.service'
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { rehypeHighlightConfigured } from "@/lib/rehype-highlight";
+import { rehypeMermaid } from "@/lib/rehype-mermaid";
+import { markdownComponents } from "@/components/shared/markdown-components";
+import Link from "next/link";
+import { GitFork } from "lucide-react";
+import type { SkillWithRelations } from "@/types/skill";
+import { TARGET_TOOLS } from "@/config/tools";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { TargetToolBadge } from "./target-tool-badge";
+import { PublicPrivateBadge } from "./public-private-badge";
+import { SkillContentActions } from "./skill-content-actions";
+import { SkillExportCard } from "./skill-export-card";
+import { formatSkillForExport } from "@/lib/services/export.service";
 
-const remarkPlugins = [remarkGfm]
+const remarkPlugins = [remarkGfm];
 // rehypeMermaid must run before the highlighter so it sees the pristine
 // code text, not tokens the highlighter has already split it into.
-const rehypePlugins = [rehypeMermaid, rehypeHighlightConfigured]
+const rehypePlugins = [rehypeMermaid, rehypeHighlightConfigured];
 
 interface SkillDetailViewProps {
-  skill: SkillWithRelations
-  sidebar: React.ReactNode
-  breadcrumb: React.ReactNode
-  forkedFrom?: { title: string; authorUsername: string } | null
+  skill: SkillWithRelations;
+  sidebar: React.ReactNode;
+  breadcrumb: React.ReactNode;
+  forkedFrom?: { title: string; authorUsername: string } | null;
 }
 
-export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: SkillDetailViewProps) {
-  const toolConfig = TARGET_TOOLS[skill.targetTool]
-  const exportData = formatSkillForExport(skill)
+export function SkillDetailView({
+  skill,
+  sidebar,
+  breadcrumb,
+  forkedFrom,
+}: SkillDetailViewProps) {
+  const toolConfig = TARGET_TOOLS[skill.targetTool];
+  const exportData = formatSkillForExport(skill);
 
-  const createdDate = new Date(skill.createdAt).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
+  const createdDate = new Date(skill.createdAt).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
   return (
     <div>
@@ -48,7 +53,9 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
           {/* Header */}
           <div>
             <div className="mb-2 flex flex-wrap items-center gap-3">
-              <h1 className="m-0 text-xl font-semibold text-foreground">{skill.title}</h1>
+              <h1 className="m-0 text-xl font-semibold text-foreground">
+                {skill.title}
+              </h1>
               <TargetToolBadge tool={skill.targetTool} size="md" />
               <PublicPrivateBadge isPublic={skill.isPublic} />
             </div>
@@ -56,7 +63,9 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
             {/* Author row */}
             <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
               <Avatar className="h-5.5 w-5.5 text-xs">
-                <AvatarFallback>{skill.author.displayName.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>
+                  {skill.author.displayName.charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <Link
                 href={`/${skill.author.username}`}
@@ -76,12 +85,18 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
                 <GitFork size={13} />
                 {forkedFrom ? (
                   <span>
-                    Forked from{' '}
-                    <Link href={`/${forkedFrom.authorUsername}/${skill.forkedFromId}`} className="font-medium text-foreground hover:underline">
+                    Forked from{" "}
+                    <Link
+                      href={`/${forkedFrom.authorUsername}/${skill.forkedFromId}`}
+                      className="font-medium text-foreground hover:underline"
+                    >
                       {forkedFrom.title}
-                    </Link>
-                    {' '}by{' '}
-                    <Link href={`/${forkedFrom.authorUsername}`} className="font-medium text-foreground hover:underline">
+                    </Link>{" "}
+                    by{" "}
+                    <Link
+                      href={`/${forkedFrom.authorUsername}`}
+                      className="font-medium text-foreground hover:underline"
+                    >
                       {forkedFrom.authorUsername}
                     </Link>
                   </span>
@@ -96,7 +111,11 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
           {skill.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {skill.tags.map((tag) => (
-                <Badge key={tag.id} variant="secondary" className="px-1.5 py-0 text-xs font-normal">
+                <Badge
+                  key={tag.id}
+                  variant="secondary"
+                  className="px-1.5 py-0 text-xs font-normal"
+                >
                   {tag.name}
                 </Badge>
               ))}
@@ -140,18 +159,22 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
           {/* Stats card */}
           <Card size="sm">
             <CardHeader>
-              <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground">STATS</CardTitle>
+              <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground">
+                STATS
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               {[
-                { label: 'Likes', value: skill.likesCount },
-                { label: 'Saves', value: skill.savesCount },
-                { label: 'Forks', value: skill.forksCount },
-                { label: 'Version', value: `v${skill.version}` },
+                { label: "Likes", value: skill.likesCount },
+                { label: "Saves", value: skill.savesCount },
+                { label: "Forks", value: skill.forksCount },
+                { label: "Version", value: `v${skill.version}` },
               ].map((stat) => (
                 <div key={stat.label} className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{stat.label}</span>
-                  <span className="font-semibold text-foreground">{stat.value}</span>
+                  <span className="font-semibold text-foreground">
+                    {stat.value}
+                  </span>
                 </div>
               ))}
             </CardContent>
@@ -168,5 +191,5 @@ export function SkillDetailView({ skill, sidebar, breadcrumb, forkedFrom }: Skil
         </div>
       </div>
     </div>
-  )
+  );
 }
